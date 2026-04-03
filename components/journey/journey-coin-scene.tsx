@@ -1,10 +1,28 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, useGLTF } from "@react-three/drei";
-import { Group, MathUtils } from "three";
-import { useFrame } from "@react-three/fiber";
+
+type DampableValue = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+type CoinGroup = {
+  rotation: DampableValue;
+  position: DampableValue;
+  scale: DampableValue;
+};
+
+function lerp(start: number, end: number, alpha: number) {
+  return start + (end - start) * alpha;
+}
+
+function damp(current: number, target: number, smoothing: number, delta: number) {
+  return lerp(current, target, 1 - Math.exp(-smoothing * delta));
+}
 
 interface SingleCoinProps {
   progressSeed: number;
@@ -13,7 +31,7 @@ interface SingleCoinProps {
 function SingleCoin({ progressSeed }: SingleCoinProps) {
   const { scene } = useGLTF("/models/blackCoin.glb");
   const clone = useMemo(() => scene.clone(), [scene]);
-  const groupRef = useRef<Group>(null);
+  const groupRef = useRef<CoinGroup | null>(null);
 
   useFrame((state, delta) => {
     const group = groupRef.current;
@@ -24,38 +42,38 @@ function SingleCoin({ progressSeed }: SingleCoinProps) {
     const flipRotation = t * 2.8;
     const scrollTiltX = 0.22 + progressSeed * 0.28;
     const scrollTiltZ = 0.06 + Math.sin(progressSeed * Math.PI * 2) * 0.08;
-    const scrollY = MathUtils.lerp(0.18, -0.18, progressSeed);
+    const scrollY = lerp(0.18, -0.18, progressSeed);
     const scrollZ = 0.18 + Math.sin(progressSeed * Math.PI) * 0.14;
     const scrollScale = 2.55 + Math.sin(progressSeed * Math.PI) * 0.14;
 
-    group.rotation.y = MathUtils.damp(
+    group.rotation.y = damp(
       group.rotation.y,
       flipRotation,
       5,
       delta,
     );
-    group.rotation.x = MathUtils.damp(
+    group.rotation.x = damp(
       group.rotation.x,
       scrollTiltX + Math.sin(t * 1.15) * 0.04,
       5,
       delta,
     );
-    group.rotation.z = MathUtils.damp(
+    group.rotation.z = damp(
       group.rotation.z,
       scrollTiltZ,
       5,
       delta,
     );
-    group.position.y = MathUtils.damp(
+    group.position.y = damp(
       group.position.y,
       scrollY + Math.sin(t * 1.8) * 0.08,
       5,
       delta,
     );
-    group.position.z = MathUtils.damp(group.position.z, scrollZ, 5, delta);
-    group.scale.x = MathUtils.damp(group.scale.x, scrollScale, 5, delta);
-    group.scale.y = MathUtils.damp(group.scale.y, scrollScale, 5, delta);
-    group.scale.z = MathUtils.damp(group.scale.z, scrollScale, 5, delta);
+    group.position.z = damp(group.position.z, scrollZ, 5, delta);
+    group.scale.x = damp(group.scale.x, scrollScale, 5, delta);
+    group.scale.y = damp(group.scale.y, scrollScale, 5, delta);
+    group.scale.z = damp(group.scale.z, scrollScale, 5, delta);
   });
 
   return (
