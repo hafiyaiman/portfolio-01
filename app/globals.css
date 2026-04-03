@@ -127,6 +127,9 @@
   html {
     @apply font-sans;
   }
+  body {
+    overflow-x: clip;
+  }
   h1,
   h2,
   h3,
