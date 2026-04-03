@@ -2,17 +2,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+Use `pnpm` for dependency and script commands in this repo.
+
+First, install dependencies and run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
+
+`pnpm install` may warn about `msw` build scripts and missing bins created from transitive `shadcn` dependencies. In this project, those warnings are expected and non-blocking unless a command explicitly fails because of them. Only run `pnpm approve-builds` if a later install or build error specifically points to one of those blocked scripts.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
