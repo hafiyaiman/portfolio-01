@@ -61,7 +61,7 @@ export function WorksShowcase({
   return (
     <div className="relative isolate mx-auto max-w-[1700px] pt-10 sm:pt-16 lg:pt-24">
       <div className="pointer-events-none absolute left-0 top-0 z-40 sm:top-5">
-        <h2 className="font-heading text-[2.6rem] font-black uppercase leading-[0.82] tracking-[-0.04em] text-white mix-blend-difference sm:text-[5.2rem] lg:text-[6.9rem]">
+        <h2 className="font-heading text-[2.6rem] font-black uppercase leading-[0.82] tracking--wider text-white mix-blend-difference sm:text-[5.2rem] lg:text-[6.9rem]">
           {worksData.title.map((line) => (
             <span key={line} className="block">
               {line}
@@ -201,7 +201,9 @@ export function WorksShowcase({
 
               <div className="mt-4 flex flex-col gap-3 text-white sm:flex-row sm:items-start sm:justify-between">
                 <div className="max-w-2xl">
-                  <h4 className="text-xl font-semibold sm:text-2xl">{item.title}</h4>
+                  <h4 className="text-xl font-semibold sm:text-2xl">
+                    {item.title}
+                  </h4>
                 </div>
                 <p className="text-sm text-white/80 sm:pt-1">
                   [{item.stack.join("] [")}]

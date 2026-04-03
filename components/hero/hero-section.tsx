@@ -15,7 +15,7 @@ export function HeroSection() {
 
           {/* Row 1: titleTop + location (xl only) */}
           <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between">
-            <span className="font-heading text-[2.65rem] font-black uppercase leading-[0.82] tracking-[-0.06em] text-[#4b0600] sm:text-[6.5rem] md:text-[6.5rem] lg:text-[8rem] xl:text-[148px]">
+            <span className="font-heading text-[2.65rem] font-black uppercase leading-[0.82] tracking--wider text-[#4b0600] sm:text-[6.5rem] md:text-[6.5rem] lg:text-[8rem] xl:text-[148px]">
               {heroData.titleTop}
             </span>
             <p className="hidden text-right text-base italic text-[#2f211a] xl:block">
@@ -25,7 +25,7 @@ export function HeroSection() {
 
           {/* Row 2: titleBottom + tagline — flat in flex-col, swap order at xl */}
           <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between">
-            <span className="font-heading text-[2.65rem] font-black uppercase leading-[0.82] tracking-[-0.06em] text-[#4b0600] sm:text-[6.5rem] md:text-[6.5rem] lg:text-[8rem] xl:order-last xl:text-[148px]">
+            <span className="font-heading text-[2.65rem] font-black uppercase leading-[0.82] tracking--wider text-[#4b0600] sm:text-[6.5rem] md:text-[6.5rem] lg:text-[8rem] xl:order-last xl:text-[148px]">
               {heroData.titleBottom}
             </span>
             <p className="max-w-[22rem] pt-1 text-[0.85rem] leading-[1.35] text-black xl:order-first xl:max-w-[28rem] xl:pt-3 xl:text-[1rem]">

@@ -9,7 +9,7 @@ export function CraftSection() {
       <div className="mx-auto flex min-h-[80vh] max-w-[1700px] flex-col items-center justify-center sm:min-h-screen">
         <div className="flex w-full flex-1 items-center justify-center">
           <div className="text-center">
-            <h2 className="font-heading text-[1.8rem] font-black uppercase leading-[1.15] tracking-wide sm:text-[3.2rem] lg:text-[4rem]">
+            <h2 className="font-heading text-[1.8rem] font-black uppercase leading-[1.15] tracking-wider sm:text-[3.2rem] lg:text-[4rem]">
               {craftData.lines.map((line) => (
                 <span
                   key={line.id}
