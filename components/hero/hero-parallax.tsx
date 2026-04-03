@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties } from "react";
 import { useRef } from "react";
 
 import { useHeroParallax } from "@/hooks/use-hero-parallax";

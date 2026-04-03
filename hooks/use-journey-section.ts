@@ -7,19 +7,17 @@ import {
   type RefObject,
   type SetStateAction,
 } from "react";
-import { Flip } from "gsap/Flip";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(Flip, ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger);
 
 interface UseJourneySectionOptions {
   sectionRef: RefObject<HTMLElement | null>;
   introRef: RefObject<HTMLDivElement | null>;
-  timelineRef: RefObject<HTMLDivElement | null>;
-  coinStageRef: RefObject<HTMLDivElement | null>;
-  markerRefs: MutableRefObject<Array<HTMLDivElement | null>>;
-  cardRefs: MutableRefObject<Array<HTMLElement | null>>;
+  stageRef: RefObject<HTMLDivElement | null>;
+  railRef: RefObject<HTMLDivElement | null>;
+  panelRefs: MutableRefObject<Array<HTMLElement | null>>;
   setActiveIndex: Dispatch<SetStateAction<number>>;
   setScrollProgress: Dispatch<SetStateAction<number>>;
 }
@@ -27,26 +25,22 @@ interface UseJourneySectionOptions {
 export function useJourneySection({
   sectionRef,
   introRef,
-  timelineRef,
-  coinStageRef,
-  markerRefs,
-  cardRefs,
+  stageRef,
+  railRef,
+  panelRefs,
   setActiveIndex,
   setScrollProgress,
 }: UseJourneySectionOptions) {
   useEffect(() => {
     const section = sectionRef.current;
     const intro = introRef.current;
-    const timeline = timelineRef.current;
-    const coinStage = coinStageRef.current;
-    const markers = markerRefs.current.filter(
-      (marker): marker is HTMLDivElement => marker !== null,
-    );
-    const cards = cardRefs.current.filter(
-      (card): card is HTMLElement => card !== null,
+    const stage = stageRef.current;
+    const rail = railRef.current;
+    const panels = panelRefs.current.filter(
+      (panel): panel is HTMLElement => panel !== null,
     );
 
-    if (!section || !intro || !timeline || !coinStage || !markers.length || !cards.length) {
+    if (!section || !intro || !stage || !rail || !panels.length) {
       return;
     }
 
@@ -57,42 +51,6 @@ export function useJourneySection({
     const ctx = gsap.context(() => {
       const introItems =
         intro.querySelectorAll<HTMLElement>("[data-journey-reveal]");
-
-      const fitToMarker = (marker: HTMLDivElement) => {
-        const state = Flip.getState(marker);
-        const tween = Flip.fit(coinStage, state, {
-          duration: 1,
-          ease: "none",
-        }) as gsap.core.Tween | null;
-
-        return tween;
-      };
-
-      const syncActiveIndex = () => {
-        const viewportCenter = window.innerHeight / 2;
-        let closestIndex = 0;
-        let closestDistance = Number.POSITIVE_INFINITY;
-
-        cards.forEach((card, index) => {
-          const rect = card.getBoundingClientRect();
-          const center = rect.top + rect.height / 2;
-          const distance = Math.abs(center - viewportCenter);
-
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = index;
-          }
-        });
-
-        setActiveIndex(closestIndex);
-      };
-
-      if (reduceMotion) {
-        fitToMarker(markers[0]);
-        setActiveIndex(0);
-        setScrollProgress(0);
-        return;
-      }
 
       gsap.fromTo(
         introItems,
@@ -111,74 +69,160 @@ export function useJourneySection({
         },
       );
 
-      cards.forEach((card, index) => {
-        const offset = index % 2 === 0 ? -28 : 28;
+      if (reduceMotion) {
+        setActiveIndex(0);
+        setScrollProgress(0);
+        gsap.set(rail, { x: 0 });
+        return;
+      }
 
-        gsap.fromTo(
-          card,
-          { y: 40, x: offset, opacity: 0 },
-          {
-            y: 0,
-            x: 0,
-            opacity: 1,
-            duration: 0.85,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 84%",
-              once: true,
+      const mm = gsap.matchMedia();
+
+      mm.add("(min-width: 1024px)", () => {
+        const getTravel = () =>
+          Math.max(rail.scrollWidth - stage.clientWidth, 0);
+
+        const updateActiveFromRail = () => {
+          const stageRect = stage.getBoundingClientRect();
+          const stageCenter = stageRect.left + stageRect.width * 0.68;
+          let closestIndex = 0;
+          let closestDistance = Number.POSITIVE_INFINITY;
+
+          panels.forEach((panel, index) => {
+            const rect = panel.getBoundingClientRect();
+            const center = rect.left + rect.width / 2;
+            const distance = Math.abs(center - stageCenter);
+
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestIndex = index;
+            }
+          });
+
+          setActiveIndex(closestIndex);
+        };
+
+        panels.forEach((panel, index) => {
+          gsap.fromTo(
+            panel,
+            { y: 36, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              ease: "power3.out",
+              delay: Math.min(index * 0.04, 0.18),
+            },
+          );
+        });
+
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: stage,
+            start: "top top",
+            end: () => `+=${getTravel() + window.innerWidth * 0.75}`,
+            pin: true,
+            scrub: 1,
+            invalidateOnRefresh: true,
+            anticipatePin: 1,
+            onUpdate: (self) => {
+              setScrollProgress(self.progress);
+              updateActiveFromRail();
+            },
+            onRefresh: () => {
+              setScrollProgress(0);
+              updateActiveFromRail();
             },
           },
-        );
+        });
+
+        timeline.to(rail, {
+          x: () => -getTravel(),
+          ease: "none",
+          duration: 1,
+        });
       });
 
-      fitToMarker(markers[0]);
+      mm.add("(max-width: 1023px)", () => {
+        const updateActiveVertical = () => {
+          const viewportCenter = window.innerHeight / 2;
+          let closestIndex = 0;
+          let closestDistance = Number.POSITIVE_INFINITY;
 
-      const travelTimeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: timeline,
-          start: "top center",
-          end: "bottom center",
-          scrub: 1.1,
-          invalidateOnRefresh: true,
+          panels.forEach((panel, index) => {
+            const rect = panel.getBoundingClientRect();
+            const center = rect.top + rect.height / 2;
+            const distance = Math.abs(center - viewportCenter);
+
+            if (distance < closestDistance) {
+              closestDistance = distance;
+              closestIndex = index;
+            }
+          });
+
+          setActiveIndex(closestIndex);
+        };
+
+        panels.forEach((panel, index) => {
+          gsap.fromTo(
+            panel,
+            { y: 28, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.75,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: panel,
+                start: "top 88%",
+                once: true,
+              },
+            },
+          );
+
+          ScrollTrigger.create({
+            trigger: panel,
+            start: "top center",
+            end: "bottom center",
+            onEnter: () => {
+              setActiveIndex(index);
+            },
+            onEnterBack: () => {
+              setActiveIndex(index);
+            },
+          });
+        });
+
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top bottom",
+          end: "bottom top",
           onUpdate: (self) => {
             setScrollProgress(self.progress);
-            syncActiveIndex();
+            updateActiveVertical();
           },
           onRefresh: () => {
-            fitToMarker(markers[0]);
-            syncActiveIndex();
+            setScrollProgress(0);
+            updateActiveVertical();
           },
-        },
+        });
       });
 
-      markers.slice(1).forEach((marker) => {
-        const tween = fitToMarker(marker);
-
-        if (tween) {
-          travelTimeline.add(tween);
-          travelTimeline.to(
-            {},
-            { duration: 0.18, ease: "none" },
-            ">",
-          );
-        }
-      });
-
-      syncActiveIndex();
+      return () => {
+        mm.revert();
+      };
     }, section);
 
     return () => {
       ctx.revert();
     };
   }, [
-    cardRefs,
-    coinStageRef,
     introRef,
-    markerRefs,
+    panelRefs,
+    railRef,
     sectionRef,
     setActiveIndex,
     setScrollProgress,
-    timelineRef,
+    stageRef,
   ]);
 }
