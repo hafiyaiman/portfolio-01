@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { WorkItem } from "@/data/works-data";
 
 interface WorkCardProps {
@@ -13,20 +14,23 @@ export function WorkCard({ item }: WorkCardProps) {
           backgroundImage: `radial-gradient(circle at 18% 22%, ${item.accent}33, transparent 22%), linear-gradient(135deg, #202020 0%, #0b0b0b 100%)`,
         }}
       >
+        <Image
+          src={item.imageSrc}
+          alt={item.imageAlt}
+          fill
+          className="object-cover object-top"
+          sizes="(max-width: 1023px) 100vw, 70vw"
+        />
+        <div className="absolute inset-0 bg-black/18" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:48px_48px]" />
         <div className="absolute inset-x-0 top-0 flex items-start justify-between p-5 sm:p-7">
-          <span className="border border-white/15 bg-white/5 px-3 py-1 text-[0.65rem] uppercase tracking-[0.24em] text-white/80">
-            Placeholder 16:9
+          <span className="border border-white/15 bg-white/5 px-3 py-1 text-[0.65rem] uppercase tracking-[0.24em] text-white/80 backdrop-blur-sm">
+            Live Preview
           </span>
           <span
             className="size-3 rounded-full"
             style={{ backgroundColor: item.accent }}
           />
-        </div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
-          <h3 className="max-w-3xl text-3xl font-bold leading-[0.95] text-white sm:text-5xl lg:text-6xl">
-            {item.subtitle}
-          </h3>
         </div>
       </div>
 

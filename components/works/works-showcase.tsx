@@ -3,6 +3,7 @@
 import { worksData } from "@/data/works-data";
 import { gsap } from "gsap";
 import { useEffect, useRef, type RefObject } from "react";
+import Image from "next/image";
 
 interface WorksShowcaseProps {
   projectsRef?: RefObject<HTMLDivElement | null>;
@@ -78,7 +79,7 @@ export function WorksShowcase({
             </p>
           </div>
 
-          <div className="relative flex max-w-full flex-row gap-3 self-start overflow-x-auto pb-2 lg:mt-10 lg:flex-col lg:overflow-visible lg:pb-0">
+          <div className="relative hidden max-w-full flex-row gap-3 self-start overflow-x-auto pb-2 lg:mt-10 lg:flex lg:flex-col lg:overflow-visible lg:pb-0">
             <div
               ref={indicatorSquareRef}
               className="pointer-events-none absolute left-[7rem] top-0 z-20 hidden size-3 bg-[#d46a1f] lg:block"
@@ -118,6 +119,14 @@ export function WorksShowcase({
                         : "none",
                   }}
                 >
+                  <Image
+                    src={item.imageSrc}
+                    alt={item.imageAlt}
+                    fill
+                    className="object-cover object-top"
+                    sizes="96px"
+                  />
+                  <div className="absolute inset-0 bg-black/10" />
                   <div
                     className="absolute inset-y-0 left-0 transition-all duration-300"
                     style={{
@@ -176,10 +185,18 @@ export function WorksShowcase({
                   backgroundImage: `radial-gradient(circle at 18% 22%, ${item.accent}33, transparent 22%), linear-gradient(135deg, #202020 0%, #0b0b0b 100%)`,
                 }}
               >
+                <Image
+                  src={item.imageSrc}
+                  alt={item.imageAlt}
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 1023px) 100vw, 70vw"
+                />
+                {/* <div className="absolute inset-0 bg-black/18" /> */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:48px_48px]" />
                 <div className="absolute inset-x-0 top-0 flex items-start justify-between p-5 sm:p-7">
-                  <span className="border border-white/15 bg-white/5 px-3 py-1 text-[0.65rem] uppercase tracking-[0.24em] text-white/80">
-                    Placeholder 16:9
+                  <span className="border border-white/15 bg-white/5 px-3 py-1 text-[0.65rem] uppercase tracking-[0.24em] text-white/80 backdrop-blur-sm">
+                    Live Preview
                   </span>
                   <span
                     className="size-3 rounded-full"
@@ -192,16 +209,11 @@ export function WorksShowcase({
                     <div className="absolute bottom-[18%] right-[0.5%] hidden aspect-video w-28 border border-white/20 bg-white/20 md:block" />
                   </>
                 ) : null}
-                <div className="absolute inset-0 flex items-center justify-center px-8 text-center">
-                  <h3 className="max-w-3xl text-2xl font-bold leading-[0.95] text-white sm:text-5xl lg:text-6xl">
-                    {item.subtitle}
-                  </h3>
-                </div>
               </div>
 
               <div className="mt-4 flex flex-col gap-3 text-white sm:flex-row sm:items-start sm:justify-between">
                 <div className="max-w-2xl">
-                  <h4 className="text-xl font-semibold sm:text-2xl">
+                  <h4 className="text-lg uppercase font-semibold sm:text-2xl">
                     {item.title}
                   </h4>
                 </div>
@@ -211,6 +223,20 @@ export function WorksShowcase({
               </div>
             </article>
           ))}
+
+          <div className="flex justify-start lg:hidden">
+            <div className="inline-flex w-fit items-center">
+              <button className="bg-brand-accent text-brand-foreground px-4 py-3 text-sm font-semibold">
+                {worksData.ctaLabel}
+              </button>
+              <button
+                aria-label="View all works"
+                className="bg-brand-accent text-brand-foreground border-l border-white/20 px-3 py-3 text-sm font-semibold"
+              >
+                {"\u2197"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

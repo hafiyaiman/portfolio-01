@@ -28,19 +28,21 @@ export function WorksSection() {
           <div className="flex flex-col justify-between lg:sticky lg:top-28 lg:h-[calc(100vh-9rem)]">
             <div>
               <p className="mb-4 text-xs uppercase tracking-[0.28em] text-white/55">
-                More Works
+                Selected Works
               </p>
               <p className="max-w-xs text-lg leading-[1.2] text-white">
-                The featured case study opens the section, then the rest of the
-                work continues below.
+                A small collection of projects built with equal care for
+                function, motion, and visual clarity.
               </p>
             </div>
 
-            <WorksIndicator
-              items={continuedItems}
-              activeIndex={activeIndex}
-              ctaLabel={worksData.ctaLabel}
-            />
+            <div className="hidden lg:block">
+              <WorksIndicator
+                items={continuedItems}
+                activeIndex={activeIndex}
+                ctaLabel={worksData.ctaLabel}
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-14 lg:gap-20">
@@ -49,6 +51,20 @@ export function WorksSection() {
                 <WorkCard item={item} />
               </div>
             ))}
+
+            <div className="flex justify-start lg:hidden">
+              <div className="inline-flex w-fit items-center">
+                <button className="bg-brand-accent text-brand-foreground px-4 py-3 text-sm font-semibold">
+                  {worksData.ctaLabel}
+                </button>
+                <button
+                  aria-label="View all works"
+                  className="bg-brand-accent text-brand-foreground border-l border-white/20 px-3 py-3 text-sm font-semibold"
+                >
+                  {"\u2197"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
