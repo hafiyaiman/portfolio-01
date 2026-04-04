@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { HTMLAttributes } from "react";
 
 const CLOCK_TIMEZONE = "Asia/Kuala_Lumpur";
 
@@ -36,7 +37,9 @@ function ClockDigit({ value }: { value: string }) {
   );
 }
 
-export function LiveClock() {
+type LiveClockProps = HTMLAttributes<HTMLSpanElement>;
+
+export function LiveClock({ className = "", ...props }: LiveClockProps) {
   const [now, setNow] = useState(() => new Date());
   const [isColonVisible, setIsColonVisible] = useState(true);
 
@@ -57,7 +60,10 @@ export function LiveClock() {
   const { hour, minute } = useMemo(() => formatTimeParts(now), [now]);
 
   return (
-    <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase leading-[1.1] tracking-[0.22em] text-[#2f211a] tabular-nums sm:text-base">
+    <span
+      className={`inline-flex items-center gap-2 text-sm font-semibold uppercase leading-[1.1] tracking-[0.22em] tabular-nums sm:text-base ${className}`.trim()}
+      {...props}
+    >
       <span className="inline-flex items-center leading-[1.1]">
         <ClockDigit value={hour[0] ?? "0"} />
         <ClockDigit value={hour[1] ?? "0"} />
