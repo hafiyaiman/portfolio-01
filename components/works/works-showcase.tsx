@@ -60,9 +60,9 @@ export function WorksShowcase({
   }, [activeIndex]);
 
   return (
-    <div className="relative isolate mx-auto max-w-[1700px] pt-10 sm:pt-16 lg:pt-24">
+    <div className="relative mx-auto max-w-[1700px] pt-10 sm:pt-16 lg:pt-24">
       <div className="pointer-events-none absolute left-0 top-0 z-40 sm:top-5">
-        <h2 className="font-heading text-[2.6rem] font-black uppercase leading-[0.82] tracking--wider text-white mix-blend-difference sm:text-[5.2rem] lg:text-[6.9rem]">
+        <h2 className="font-heading text-[2.6rem] font-black uppercase leading-[0.82] tracking--wider text-white drop-shadow-sm sm:text-[5.2rem] lg:text-[6.9rem]">
           {worksData.title.map((line) => (
             <span key={line} className="block">
               {line}
@@ -190,6 +190,7 @@ export function WorksShowcase({
                   alt={item.imageAlt}
                   fill
                   className="object-cover object-top"
+                  loading={index === 0 ? "eager" : "lazy"}
                   sizes="(max-width: 1023px) 100vw, 70vw"
                 />
                 {/* <div className="absolute inset-0 bg-black/18" /> */}

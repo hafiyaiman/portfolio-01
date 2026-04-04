@@ -3,7 +3,10 @@ import { heroData } from "@/data/hero-data";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-svh w-full overflow-hidden px-4 pb-6 sm:px-5 lg:pb-10">
+    <section
+      id="hero"
+      className="relative min-h-svh w-full overflow-hidden px-4 pb-6 sm:px-5 lg:pb-10"
+    >
       <div className="relative flex min-h-[calc(100svh-4.5rem)] flex-col pt-2 sm:min-h-[calc(100svh-6rem)] sm:pt-4">
         <HeroParallax />
 
