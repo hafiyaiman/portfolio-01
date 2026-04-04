@@ -30,11 +30,11 @@ export function JourneySection() {
     <section
       ref={sectionRef}
       id="journey"
-      className="relative overflow-hidden bg-[#f7f4ef] px-4 py-20 text-[#1d140f] sm:px-5 sm:py-28 lg:py-36"
+      className="relative min-h-svh overflow-hidden bg-[#f7f4ef] px-4 py-20 text-[#1d140f] sm:px-5 sm:py-28 lg:py-36"
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(212,106,31,0.06),transparent_18%),linear-gradient(180deg,#f7f4ef_0%,#f4eee6_100%)]" />
 
-      <div className="relative mx-auto max-w-[1700px]">
+      <div className="relative mx-auto min-h-[calc(100svh-10rem)] max-w-[1700px]">
         <div
           ref={introRef}
           className="mb-12 w-full text-center sm:mb-16 lg:mb-20 lg:text-left"

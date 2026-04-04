@@ -81,7 +81,7 @@ export function WorksShowcase({
           <div className="relative flex max-w-full flex-row gap-3 self-start overflow-x-auto pb-2 lg:mt-10 lg:flex-col lg:overflow-visible lg:pb-0">
             <div
               ref={indicatorSquareRef}
-              className="pointer-events-none absolute left-[6.5rem] top-0 z-20 hidden size-4 border border-[#d46a1f] bg-[#d46a1f] shadow-[0_0_0_6px_rgba(212,82,31,0.14)] lg:block"
+              className="pointer-events-none absolute left-[7rem] top-0 z-20 hidden size-3 bg-[#d46a1f] lg:block"
               style={{ willChange: "transform" }}
             />
             {worksData.items.map((item, index) => (
@@ -126,7 +126,7 @@ export function WorksShowcase({
                     }}
                   />
                 </div>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <div
                     className="size-2 shrink-0 border transition-all duration-300"
                     style={{
@@ -146,7 +146,7 @@ export function WorksShowcase({
                         index === activeIndex ? "#d46a1f" : "#ffffff33",
                     }}
                   />
-                </div>
+                </div> */}
               </button>
             ))}
 

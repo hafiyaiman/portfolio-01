@@ -31,22 +31,22 @@ export function Navbar() {
         <div className="mx-auto flex items-center justify-between max-w-[1700px] gap-3 sm:grid sm:grid-cols-[1fr_auto_1fr]">
           {/* HAH text only (logo excluded) */}
           <div className="flex items-center justify-start">
-            <div className="h-14 w-14 sm:h-20 sm:w-20" />{" "}
+            <div className="h-14 w-14 sm:h-20 sm:w-20" />
             {/* spacer matching logo size */}
             <a
               href="#top"
               aria-label="Go to top"
-              className="pointer-events-auto text-white font-heading text-[1.7rem] font-black uppercase leading-none tracking-[-0.06em] sm:text-[2.4rem]"
+              className="text-splash-foreground pointer-events-auto font-heading text-[1.7rem] font-black uppercase leading-none tracking-[-0.06em] sm:text-[2.4rem]"
             >
               HAH.
             </a>
           </div>
-          <div className="hidden justify-self-center text-white sm:block">
+          <div className="text-splash-foreground hidden justify-self-center sm:block">
             <LiveClock />
           </div>
           <button
             aria-label="Open menu"
-            className="pointer-events-auto ml-auto flex flex-col gap-1.5 p-1 text-white sm:gap-[5px]"
+            className="text-splash-foreground pointer-events-auto ml-auto flex flex-col gap-1.5 p-1 sm:gap-[5px]"
           >
             <span className="block h-[2px] w-5 bg-current sm:w-6" />
             <span className="block h-[2px] w-5 bg-current sm:w-6" />

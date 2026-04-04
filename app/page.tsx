@@ -8,7 +8,7 @@ import { WhatIDoMaskSequence } from "@/components/what-i-do/what-i-do-mask-seque
 export default function Home() {
   return (
     <SiteSplashReveal>
-      <main className="relative isolate min-h-screen overflow-x-clip bg-[#f7f4ef] text-[#1d140f]">
+      <main className="relative isolate min-h-screen overflow-x-clip bg-background text-foreground">
         <Navbar />
         <HeroSection />
         <WhatIDoMaskSequence />

@@ -18,8 +18,12 @@ export function WorksSection() {
   });
 
   return (
-    <section ref={sectionRef} id="works" className="relative z-10 bg-[#4b0600]">
-      <div className="px-5 pb-20 pt-10 lg:pb-28 lg:pt-12">
+    <section
+      ref={sectionRef}
+      id="works"
+      className="relative z-10 min-h-svh bg-[#4b0600]"
+    >
+      <div className="min-h-svh px-5 pb-20 pt-10 lg:pb-28 lg:pt-12">
         <div className="mx-auto grid max-w-[1700px] gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14">
           <div className="flex flex-col justify-between lg:sticky lg:top-28 lg:h-[calc(100vh-9rem)]">
             <div>

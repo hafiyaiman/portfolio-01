@@ -142,7 +142,7 @@ export function SiteSplashReveal({ children }: SiteSplashRevealProps) {
   }, []);
 
   return (
-    <div ref={scopeRef} className="relative bg-[#0a0a0a] min-h-screen">
+    <div ref={scopeRef} className="bg-splash relative min-h-screen">
       {/* Main Site Content */}
       <div ref={contentRef}>{children}</div>
 
@@ -150,7 +150,7 @@ export function SiteSplashReveal({ children }: SiteSplashRevealProps) {
       {!isComplete && (
         <div
           ref={overlayRef}
-          className="pointer-events-none fixed inset-0 z-[200] bg-[#0a0a0a] flex flex-col justify-between p-6 sm:p-12"
+          className="bg-splash pointer-events-none fixed inset-0 z-[200] flex flex-col justify-between p-6 sm:p-12"
           aria-hidden="true"
         >
           <div ref={splashBodyRef} className="flex flex-col h-full w-full">
@@ -172,19 +172,19 @@ export function SiteSplashReveal({ children }: SiteSplashRevealProps) {
             <div className="flex-none flex items-end justify-between w-full overflow-hidden">
               {/* Progress Number */}
               <div className="flex flex-col">
-                <span className="text-[0.65rem] uppercase tracking-[0.2em] text-white/40 mb-1">
+                <span className="text-splash-foreground/40 mb-1 text-[0.65rem] uppercase tracking-[0.2em]">
                   System Load
                 </span>
-                <p className="font-mono text-5xl sm:text-7xl font-light tabular-nums text-white leading-none">
+                <p className="text-splash-foreground font-mono text-5xl font-light leading-none tabular-nums sm:text-7xl">
                   {progressLabel}
-                  <span className="text-white/30 text-3xl sm:text-5xl">%</span>
+                  <span className="text-splash-foreground/30 text-3xl sm:text-5xl">%</span>
                 </p>
               </div>
 
               {/* Status Text */}
               <div className="flex flex-col items-end text-right">
-                <div className="h-[1px] w-12 bg-white/20 mb-3" />
-                <p className="text-[0.65rem] sm:text-xs uppercase tracking-[0.4em] text-white/70">
+                <div className="bg-splash-foreground/20 mb-3 h-[1px] w-12" />
+                <p className="text-splash-foreground/70 text-[0.65rem] uppercase tracking-[0.4em] sm:text-xs">
                   Loading
                   <br />
                   Portfolio

@@ -12,7 +12,7 @@ export function WhatIDoList({ items }: WhatIDoListProps) {
           key={item.id}
           className={[
             "font-heading text-[2.85rem] font-black uppercase leading-[1.02] tracking-wider sm:text-[5.5rem] md:text-[7rem] lg:text-[8rem] xl:text-[9rem]",
-            item.tone === "accent" ? "text-[#d4521f]" : "text-[#4b0600]",
+            item.tone === "accent" ? "text-brand-accent" : "text-brand",
           ].join(" ")}
         >
           {item.label}
