@@ -16,19 +16,16 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [isInHero, setIsInHero] = useState(true);
+  const showHeroMenu = pathname === "/" && isInHero;
 
   useEffect(() => {
     if (pathname !== "/") {
-      setIsInHero(false);
       return;
     }
 
     const hero = document.getElementById("hero");
 
-    if (!hero) {
-      setIsInHero(false);
-      return;
-    }
+    if (!hero) return;
 
     const updateHeroState = () => {
       const { bottom } = hero.getBoundingClientRect();
@@ -90,7 +87,7 @@ export function Navbar() {
             <LiveClock />
           </div>
 
-          {isInHero ? (
+          {showHeroMenu ? (
             <button
               aria-label="Open menu"
               className="text-splash-foreground pointer-events-auto ml-auto flex flex-col gap-1.5 p-1 sm:gap-[5px]"

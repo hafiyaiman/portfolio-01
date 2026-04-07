@@ -1,3 +1,4 @@
+import { MorphFooterReveal } from "@/components/footer/morph-footer-reveal";
 import { Navbar } from "@/components/navbar";
 
 export default function WorksPage() {
@@ -17,6 +18,12 @@ export default function WorksPage() {
           </p>
         </div>
       </section>
+      <MorphFooterReveal
+        baseClassName="bg-background"
+        morphPrimaryColor="var(--background)"
+        morphSecondaryColor="var(--background)"
+        morphStrokeColor="rgba(38,30,25,0.14)"
+      />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import { CraftSection } from "@/components/craft/craft-section";
+import { MorphFooterReveal } from "@/components/footer/morph-footer-reveal";
 import { HeroSection } from "@/components/hero/hero-section";
 // import { JourneySection } from "@/components/journey/journey-section";
 import { Navbar } from "@/components/navbar";
@@ -13,6 +14,12 @@ export default function Home() {
         <HeroSection />
         <WhatIDoMaskSequence />
         <CraftSection />
+        <MorphFooterReveal
+          baseClassName="bg-brand"
+          morphPrimaryColor="var(--brand)"
+          morphSecondaryColor="var(--brand)"
+          morphStrokeColor="rgba(248,239,226,0.2)"
+        />
         {/* <JourneySection /> */}
       </main>
     </SiteSplashReveal>

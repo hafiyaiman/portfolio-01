@@ -159,9 +159,13 @@
   }
   html {
     @apply font-sans;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   body {
     overflow-x: clip;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   h1,
   h2,
@@ -171,4 +175,18 @@
   h6 {
     @apply font-heading;
   }
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.minimal-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.minimal-scrollbar::-webkit-scrollbar {
+  display: none;
 }

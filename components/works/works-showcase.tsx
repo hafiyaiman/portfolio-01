@@ -79,7 +79,7 @@ export function WorksShowcase({
             </p>
           </div>
 
-          <div className="relative hidden max-w-full flex-row gap-3 self-start overflow-x-auto pb-2 lg:mt-10 lg:flex lg:flex-col lg:overflow-visible lg:pb-0">
+          <div className="minimal-scrollbar relative hidden max-w-full flex-row gap-3 self-start overflow-x-auto pb-2 lg:mt-10 lg:flex lg:flex-col lg:overflow-visible lg:pb-0">
             <div
               ref={indicatorSquareRef}
               className="pointer-events-none absolute left-[7rem] top-0 z-20 hidden size-3 bg-[#d46a1f] lg:block"
