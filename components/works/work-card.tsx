@@ -19,6 +19,9 @@ export function WorkCard({ item }: WorkCardProps) {
           alt={item.imageAlt}
           fill
           className="object-cover object-top"
+          loading={
+            item.imageSrc === "/img/works/kad-undangan.png" ? "eager" : "lazy"
+          }
           sizes="(max-width: 1023px) 100vw, 70vw"
         />
         <div className="absolute inset-0 bg-black/18" />

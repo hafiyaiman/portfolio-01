@@ -41,7 +41,7 @@ export const worksData: WorksContent = {
       subtitle: "Elegant invites with a polished response flow.",
       description:
         "A modern RSVP experience with guest tracking, event details, and frictionless submission states.",
-      stack: ["Next.js", "TypeScript"],
+      stack: ["Next.js", "TypeScript", "Supabase"],
       accent: "#d8b569",
       imageSrc: "/img/works/kad-undangan.png",
       imageAlt: "Invitation card RSVP project preview",
@@ -52,7 +52,7 @@ export const worksData: WorksContent = {
       subtitle: "Smart Bill Splitting",
       description:
         "A playful yet intuitive web app that helps friends split expenses effortlessly. Designed with smooth layout transitions, expressive typography, and GSAP-driven micro-interactions to make something as boring as splitting bills feel surprisingly fun.",
-      stack: ["Frontend", "GSAP", "React"],
+      stack: ["Frontend", "Next.js"],
       accent: "#c94d3f",
       imageSrc: "/img/works/split-bills.png",
       imageAlt: "SplitTogether bill splitting webapp preview",

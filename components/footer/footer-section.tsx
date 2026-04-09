@@ -1,80 +1,78 @@
-"use client";
-
 import { footerData } from "@/data/footer-data";
-import { Download, ArrowUpRight } from "lucide-react";
-import Link from "next/link";
-import type { RefObject } from "react";
+import { FooterOrbitInteraction } from "./footer-orbit-interaction";
+import { FaGithub } from "react-icons/fa";
+import { FaLinkedinIn } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 
 interface FooterSectionProps {
-  contentRef?: RefObject<HTMLDivElement | null>;
   standalone?: boolean;
 }
 
-export function FooterSection({
-  contentRef,
-  standalone = true,
-}: FooterSectionProps) {
+export function FooterSection({ standalone = true }: FooterSectionProps) {
   const content = (
-    <div
-      ref={contentRef}
-      className="relative z-10 mx-auto flex min-h-svh max-w-[1700px] flex-col justify-between gap-12 px-4 py-16 sm:px-5 sm:py-20 lg:gap-16 lg:py-24"
-    >
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:gap-16">
-        <div>
-          {/* <p className="mb-4 text-xs uppercase tracking-[0.28em] text-brand">
-            {footerData.eyebrow}
-          </p> */}
-          <h2 className="font-heading max-w-5xl text-[2.6rem] font-black uppercase leading-[1] tracking-wider text-brand sm:text-[4.8rem] lg:text-[7rem]">
-            {footerData.title.map((line) => (
-              <span key={line} className="block">
-                {line}
-              </span>
-            ))}
-          </h2>
+    <div className="relative">
+      <FooterOrbitInteraction />
+
+      <div className="relative z-30 mx-auto flex min-h-svh max-w-[1700px] flex-col justify-between gap-12 px-4 py-16 sm:px-5 sm:py-20 lg:gap-16 lg:py-24">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:gap-16">
+          <div>
+            <h2 className="font-heading max-w-5xl text-[2.6rem] font-black uppercase leading-[1] tracking-wider text-brand sm:text-[4.8rem] lg:text-[7rem]">
+              {footerData.title.map((line) => (
+                <span key={line} className="block">
+                  {line}
+                </span>
+              ))}
+            </h2>
+          </div>
+
+          <div className="space-y-5 border-t border-white/12 pt-6 text-brand lg:border-l lg:border-t-0 lg:pl-8 lg:pt-2">
+            <p className="max-w-full text-base leading-[1.45] sm:text-lg">
+              {footerData.description}
+            </p>
+            <p className="text-sm uppercase tracking-[0.22em] text-brand">
+              {footerData.locationLabel}
+            </p>
+            <p className="max-w-full text-sm leading-[1.55] text-brand sm:text-base">
+              {footerData.availability}
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-5 border-t border-white/12 pt-6 text-brand lg:border-l lg:border-t-0 lg:pl-8 lg:pt-2">
-          <p className="max-w-full text-base leading-[1.45] sm:text-lg">
-            {footerData.description}
-          </p>
-          <p className="text-sm uppercase tracking-[0.22em] text-brand">
-            {footerData.locationLabel}
-          </p>
-          <p className="max-w-full text-sm leading-[1.55] text-brand sm:text-base">
-            {footerData.availability}
-          </p>
-        </div>
-      </div>
+        <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="flex flex-wrap gap-3">
+            {footerData.socialLinks.map((link) => {
+              const Icon =
+                link.platform === "linkedin"
+                  ? FaLinkedinIn
+                  : link.platform === "github"
+                    ? FaGithub
+                    : MdEmail;
 
-      <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div className="flex flex-wrap gap-3">
-          {footerData.links.map((link) =>
-            link.download ? (
-              <a
-                key={link.href}
-                href={link.href}
-                download
-                className="inline-flex items-center gap-2 border border-brand/14 bg-brand/6 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand transition-colors duration-200 hover:border-brand/30 hover:bg-brand/10"
-              >
-                {link.label}
-                <Download className="h-4 w-4" strokeWidth={2.3} />
-              </a>
-            ) : (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="inline-flex items-center gap-2 border border-brand/14 bg-brand/6 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-brand transition-colors duration-200 hover:border-brand/30 hover:bg-brand/10"
-              >
-                {link.label}
-                <ArrowUpRight className="h-4 w-4" strokeWidth={2.3} />
-              </Link>
-            ),
-          )}
-        </div>
+              return (
+                <a
+                  key={link.platform}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={link.label}
+                  title={link.label}
+                  className="size-6 text-brand transition-transform duration-200 hover:-translate-y-0.5"
+                >
+                  <Icon className="size-5" />
+                  <span className="sr-only">{link.label}</span>
+                </a>
+              );
+            })}
+          </div>
 
-        <p className="max-w-full text-sm leading-[1.5] text-white/40 lg:text-right">
-          {footerData.note}
-        </p>
+          <div className="flex flex-col items-start gap-4 lg:items-end">
+            <div className="min-h-28 w-full" />
+
+            <p className="max-w-full text-sm leading-[1.5] text-brand lg:text-right">
+              {footerData.note}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

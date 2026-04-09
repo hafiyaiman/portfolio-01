@@ -40,7 +40,7 @@ function ClockDigit({ value }: { value: string }) {
 type LiveClockProps = HTMLAttributes<HTMLSpanElement>;
 
 export function LiveClock({ className = "", ...props }: LiveClockProps) {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
   const [isColonVisible, setIsColonVisible] = useState(true);
 
   useEffect(() => {
@@ -57,7 +57,10 @@ export function LiveClock({ className = "", ...props }: LiveClockProps) {
     return () => window.clearInterval(intervalId);
   }, []);
 
-  const { hour, minute } = useMemo(() => formatTimeParts(now), [now]);
+  const { hour, minute } = useMemo(
+    () => (now ? formatTimeParts(now) : { hour: "--", minute: "--" }),
+    [now],
+  );
 
   return (
     <span

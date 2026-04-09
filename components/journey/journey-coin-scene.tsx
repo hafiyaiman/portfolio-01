@@ -98,6 +98,12 @@ export function JourneyCoinScene({ progressSeed }: JourneyCoinSceneProps) {
       <Canvas
         camera={{ position: [0, 0, 7.4], fov: 26 }}
         gl={{ alpha: true, antialias: true }}
+        onCreated={({ gl }) => {
+          // The Windows/D3D shader compiler emits noisy precision warnings for
+          // Three.js-generated shaders in this scene. They don't affect output,
+          // so we keep them out of the browser console.
+          gl.debug.checkShaderErrors = false;
+        }}
       >
         <ambientLight intensity={1.05} />
         <directionalLight position={[4, 5, 6]} intensity={3.1} color="#ffd8bb" />
