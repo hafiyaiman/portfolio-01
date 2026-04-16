@@ -125,7 +125,8 @@ export function WorksShowcase({
                     fill
                     className="object-cover object-top"
                     loading={
-                      index === 0 || item.imageSrc === "/img/works/kad-undangan.png"
+                      index === 0 ||
+                      item.imageSrc === "/img/works/kad-undangan.png"
                         ? "eager"
                         : "lazy"
                     }
@@ -165,12 +166,18 @@ export function WorksShowcase({
             ))}
 
             <div className="mt-4 inline-flex w-fit shrink-0 items-center">
-              <button className="bg-[#d4521f] px-4 py-3 text-sm font-semibold text-white">
+              <button
+                disabled
+                aria-disabled="true"
+                className="cursor-not-allowed bg-[#d4521f] px-4 py-3 text-sm font-semibold text-white opacity-55"
+              >
                 {worksData.ctaLabel}
               </button>
               <button
+                disabled
                 aria-label="View all works"
-                className="border-l border-white/20 bg-[#d4521f] px-3 py-3 text-sm font-semibold text-white"
+                aria-disabled="true"
+                className="cursor-not-allowed border-l border-white/20 bg-[#d4521f] px-3 py-3 text-sm font-semibold text-white opacity-55"
               >
                 ↗
               </button>
@@ -196,7 +203,8 @@ export function WorksShowcase({
                   fill
                   className="object-cover object-top"
                   loading={
-                    index === 0 || item.imageSrc === "/img/works/kad-undangan.png"
+                    index === 0 ||
+                    item.imageSrc === "/img/works/kad-undangan.png"
                       ? "eager"
                       : "lazy"
                   }
@@ -236,12 +244,18 @@ export function WorksShowcase({
 
           <div className="flex justify-start lg:hidden">
             <div className="inline-flex w-fit items-center">
-              <button className="bg-brand-accent text-brand-foreground px-4 py-3 text-sm font-semibold">
+              <button
+                disabled
+                aria-disabled="true"
+                className="bg-brand-accent text-brand-foreground cursor-not-allowed px-4 py-3 text-sm font-semibold opacity-55"
+              >
                 {worksData.ctaLabel}
               </button>
               <button
+                disabled
                 aria-label="View all works"
-                className="bg-brand-accent text-brand-foreground border-l border-white/20 px-3 py-3 text-sm font-semibold"
+                aria-disabled="true"
+                className="bg-brand-accent text-brand-foreground cursor-not-allowed border-l border-white/20 px-3 py-3 text-sm font-semibold opacity-55"
               >
                 {"\u2197"}
               </button>

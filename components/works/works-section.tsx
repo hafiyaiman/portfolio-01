@@ -54,10 +54,14 @@ export function WorksSection() {
 
             <div className="flex justify-start lg:hidden">
               <div className="inline-flex w-fit items-center">
-                <button className="bg-brand-accent text-brand-foreground px-4 py-3 text-sm font-semibold">
+                <button
+                  disabled
+                  className="bg-brand-accent text-brand-foreground px-4 py-3 text-sm font-semibold"
+                >
                   {worksData.ctaLabel}
                 </button>
                 <button
+                  disabled
                   aria-label="View all works"
                   className="bg-brand-accent text-brand-foreground border-l border-white/20 px-3 py-3 text-sm font-semibold"
                 >

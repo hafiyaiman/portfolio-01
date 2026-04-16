@@ -30,7 +30,7 @@ export const worksData: WorksContent = {
       subtitle: "Park affordably. Travel confidently.",
       description:
         "A full stack parking platform focused on trust, ease, and fast booking flows across mobile and desktop.",
-      stack: ["Full Stack", "Laravel"],
+      stack: ["Full Stack", "Laravel", "PostgreSQL"],
       accent: "#d46a1f",
       imageSrc: "/img/works/d-park-village.jpg",
       imageAlt: "D Park Village project preview",

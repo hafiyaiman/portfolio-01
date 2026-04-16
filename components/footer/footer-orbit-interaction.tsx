@@ -357,7 +357,7 @@ export function FooterOrbitInteraction() {
             />
           </svg>
           <span className="absolute flex size-8 items-center justify-center rounded-full bg-brand text-background text-[0.58rem] font-bold uppercase tracking-[0.24em]">
-            Go
+            HOLD
           </span>
         </button>
       </div>

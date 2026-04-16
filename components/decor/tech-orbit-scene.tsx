@@ -41,13 +41,22 @@ interface OrbitRingProps {
   cardHeight: number;
   orbitRadius: number;
   curveRadius: number;
-  faceTexture: Texture | null;
+  faceTextures: Texture[];
   shimmerTexture: Texture | null;
 }
 
-const ORBIT_IMAGE_URL =
-  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/cermAI/cermAI.png";
-const ORBIT_FALLBACK_IMAGE_URL = "/img/works/kad-undangan.png";
+const ORBIT_IMAGE_URLS = [
+  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/d-park-village.jpg",
+  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/kad-undangan.png",
+  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/poster.png",
+  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/split-bills.png",
+] as const;
+
+const ORBIT_FALLBACK_IMAGE_URLS = [
+  "/img/works/d-park-village.jpg",
+  "/img/works/kad-undangan.png",
+  "/img/works/split-bills.png",
+] as const;
 
 function TowerStructure() {
   const towerHeight = 6.4;
@@ -320,7 +329,7 @@ function OrbitRing({
   cardHeight,
   orbitRadius,
   curveRadius,
-  faceTexture,
+  faceTextures,
   shimmerTexture,
 }: OrbitRingProps) {
   const groupRef = useRef<Group | null>(null);
@@ -358,7 +367,7 @@ function OrbitRing({
           cardHeight={cardHeight}
           curveRadius={curveRadius}
           geometry={geometry}
-          faceTexture={faceTexture}
+          faceTexture={faceTextures[index % faceTextures.length] ?? null}
           shimmerTexture={shimmerTexture}
           highlightPhase={index / 10}
         />
@@ -369,9 +378,9 @@ function OrbitRing({
 
 function OrbitAssembly({
   speedMultiplier,
-  faceTexture,
+  faceTextures,
   shimmerTexture,
-}: Pick<OrbitRingProps, "speedMultiplier" | "faceTexture" | "shimmerTexture">) {
+}: Pick<OrbitRingProps, "speedMultiplier" | "faceTextures" | "shimmerTexture">) {
   return (
     <group
       position={[0.45, -0.05, 0]}
@@ -385,7 +394,7 @@ function OrbitAssembly({
         cardHeight={0.95625}
         orbitRadius={3.15}
         curveRadius={4.8}
-        faceTexture={faceTexture}
+        faceTextures={faceTextures}
         shimmerTexture={shimmerTexture}
       />
     </group>
@@ -395,7 +404,7 @@ function OrbitAssembly({
 function OrbitCardsScene({
   speedMultiplier,
 }: Pick<TechOrbitSceneProps, "speedMultiplier">) {
-  const [faceTexture, setFaceTexture] = useState<Texture | null>(null);
+  const [faceTextures, setFaceTextures] = useState<Texture[]>([]);
   const shimmerTexture = useMemo(() => createShimmerTexture(), []);
 
   useEffect(() => {
@@ -403,42 +412,61 @@ function OrbitCardsScene({
     const loader = new TextureLoader();
     loader.setCrossOrigin("anonymous");
 
-    const applyTexture = (loadedTexture: Texture) => {
-      if (isDisposed) {
-        loadedTexture.dispose();
+    const loadTexture = (url: string) =>
+      new Promise<Texture | null>((resolve) => {
+        loader.load(
+          url,
+          (loadedTexture) => {
+            resolve(prepareTexture(loadedTexture));
+          },
+          undefined,
+          (error) => {
+            console.error("Failed to load orbit texture:", url, error);
+            resolve(null);
+          },
+        );
+      });
+
+    const loadOrbitTextures = async () => {
+      const primaryTextures = await Promise.all(
+        ORBIT_IMAGE_URLS.map((url) => loadTexture(url)),
+      );
+      const resolvedPrimaryTextures = primaryTextures.filter(
+        (texture): texture is Texture => texture !== null,
+      );
+
+      if (resolvedPrimaryTextures.length > 0) {
+        if (isDisposed) {
+          resolvedPrimaryTextures.forEach((texture) => texture.dispose());
+          return;
+        }
+
+        setFaceTextures((currentTextures) => {
+          currentTextures.forEach((texture) => texture.dispose());
+          return resolvedPrimaryTextures;
+        });
         return;
       }
 
-      setFaceTexture((currentTexture) => {
-        currentTexture?.dispose();
-        return prepareTexture(loadedTexture);
+      const fallbackTextures = await Promise.all(
+        ORBIT_FALLBACK_IMAGE_URLS.map((url) => loadTexture(url)),
+      );
+      const resolvedFallbackTextures = fallbackTextures.filter(
+        (texture): texture is Texture => texture !== null,
+      );
+
+      if (isDisposed) {
+        resolvedFallbackTextures.forEach((texture) => texture.dispose());
+        return;
+      }
+
+      setFaceTextures((currentTextures) => {
+        currentTextures.forEach((texture) => texture.dispose());
+        return resolvedFallbackTextures;
       });
     };
 
-    const loadFallbackTexture = () => {
-      loader.load(
-        ORBIT_FALLBACK_IMAGE_URL,
-        applyTexture,
-        undefined,
-        (fallbackError) => {
-          console.error(
-            "Failed to load fallback orbit texture:",
-            ORBIT_FALLBACK_IMAGE_URL,
-            fallbackError,
-          );
-        },
-      );
-    };
-
-    loader.load(
-      ORBIT_IMAGE_URL,
-      applyTexture,
-      undefined,
-      (error) => {
-        console.error("Failed to load orbit texture:", ORBIT_IMAGE_URL, error);
-        loadFallbackTexture();
-      },
-    );
+    void loadOrbitTextures();
 
     return () => {
       isDisposed = true;
@@ -447,10 +475,10 @@ function OrbitCardsScene({
 
   useEffect(() => {
     return () => {
-      faceTexture?.dispose();
+      faceTextures.forEach((texture) => texture.dispose());
       shimmerTexture?.dispose();
     };
-  }, [faceTexture, shimmerTexture]);
+  }, [faceTextures, shimmerTexture]);
 
   return (
     <Canvas
@@ -474,7 +502,7 @@ function OrbitCardsScene({
 
       <OrbitAssembly
         speedMultiplier={speedMultiplier ?? 1}
-        faceTexture={faceTexture}
+        faceTextures={faceTextures}
         shimmerTexture={shimmerTexture}
       />
     </Canvas>
