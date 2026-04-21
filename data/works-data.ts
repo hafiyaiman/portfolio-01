@@ -43,7 +43,7 @@ export const worksData: WorksContent = {
         "A modern RSVP experience with guest tracking, event details, and frictionless submission states.",
       stack: ["Next.js", "TypeScript", "Supabase"],
       accent: "#d8b569",
-      imageSrc: "/img/works/kad-undangan.png",
+      imageSrc: "/img/works/kad-undangan.webp",
       imageAlt: "Invitation card RSVP project preview",
     },
     {
@@ -54,7 +54,7 @@ export const worksData: WorksContent = {
         "A playful yet intuitive web app that helps friends split expenses effortlessly. Designed with smooth layout transitions, expressive typography, and GSAP-driven micro-interactions to make something as boring as splitting bills feel surprisingly fun.",
       stack: ["Frontend", "Next.js"],
       accent: "#c94d3f",
-      imageSrc: "/img/works/split-bills.png",
+      imageSrc: "/img/works/split-bills.webp",
       imageAlt: "SplitTogether bill splitting webapp preview",
       // link: "https://split-together.hafiyai.link/",
     },

@@ -40,11 +40,11 @@ function SingleCoin({ progressSeed }: SingleCoinProps) {
 
     const t = state.clock.elapsedTime;
     const flipRotation = t * 2.8;
-    const scrollTiltX = 0.22 + progressSeed * 0.28;
-    const scrollTiltZ = 0.06 + Math.sin(progressSeed * Math.PI * 2) * 0.08;
-    const scrollY = lerp(0.18, -0.18, progressSeed);
-    const scrollZ = 0.3 + Math.sin(progressSeed * Math.PI) * 0.12;
-    const scrollScale = 2.55 + Math.sin(progressSeed * Math.PI) * 0.14;
+    const scrollTiltX = 0.06 + progressSeed * 0.12;
+    const scrollTiltZ = 0.015 + Math.sin(progressSeed * Math.PI * 2) * 0.03;
+    const scrollY = lerp(0.12, -0.1, progressSeed);
+    const scrollZ = 0.18 + Math.sin(progressSeed * Math.PI) * 0.06;
+    const scrollScale = 2.5 + Math.sin(progressSeed * Math.PI) * 0.08;
 
     group.rotation.y = damp(
       group.rotation.y,
@@ -80,8 +80,8 @@ function SingleCoin({ progressSeed }: SingleCoinProps) {
     <group
       ref={groupRef}
       position={[0, 0, 0.3]}
-      rotation={[0.28, 0, 0.08]}
-      scale={2.65}
+      rotation={[0.08, 0, 0.02]}
+      scale={2.5}
     >
       <primitive object={clone} />
     </group>

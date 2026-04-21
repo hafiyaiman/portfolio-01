@@ -10,12 +10,15 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import {
+  getFooterOrbitPreloadStatus,
+  preloadFooterOrbitAssets,
+  useFooterOrbitPreloadState,
+} from "@/lib/footer-orbit-preload";
+import { loadTechOrbitSceneModule } from "@/lib/load-tech-orbit-scene";
 
 const TechOrbitScene = dynamic(
-  () =>
-    import("@/components/decor/tech-orbit-scene").then(
-      (module) => module.TechOrbitScene,
-    ),
+  () => loadTechOrbitSceneModule().then((module) => module.TechOrbitScene),
   {
     ssr: false,
     loading: () => null,
@@ -29,6 +32,7 @@ const VACUUM_PARTICLES = Array.from({ length: 10 }, (_, index) => index);
 export function FooterOrbitInteraction() {
   const PROGRESS_CIRCUMFERENCE = 194.78;
   const router = useRouter();
+  const preloadState = useFooterOrbitPreloadState();
   const footerScopeRef = useRef<HTMLDivElement>(null);
   const holdFrameRef = useRef<number | null>(null);
   const holdLastTimestampRef = useRef<number | null>(null);
@@ -42,15 +46,27 @@ export function FooterOrbitInteraction() {
   const [cursorPoint, setCursorPoint] = useState({ x: 0, y: 0 });
   const [isHolding, setIsHolding] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
-  const [shouldLoadScene, setShouldLoadScene] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      typeof IntersectionObserver === "undefined",
+  const [hasSceneRequest, setHasSceneRequest] = useState(
+    () => {
+      const preloadSnapshot = getFooterOrbitPreloadStatus();
+
+      return (
+        preloadSnapshot.status === "ready" ||
+        (typeof window !== "undefined" &&
+          typeof IntersectionObserver === "undefined")
+      );
+    },
   );
 
   const chargeProgress = holdProgress * holdProgress;
   const orbitSpeedMultiplier = 1 + chargeProgress * 48;
   const vacuumDuration = `${Math.max(0.22, 1.15 - chargeProgress * 0.8)}s`;
+  const shouldLoadScene =
+    hasSceneRequest || preloadState.status === "ready";
+
+  useEffect(() => {
+    void preloadFooterOrbitAssets({ timeoutMs: 0 });
+  }, []);
 
   const syncProgressVisuals = (progress: number) => {
     const charge = progress * progress;
@@ -79,7 +95,8 @@ export function FooterOrbitInteraction() {
           return;
         }
 
-        setShouldLoadScene(true);
+        void preloadFooterOrbitAssets({ timeoutMs: 0 });
+        setHasSceneRequest(true);
         observer.disconnect();
       },
       {
@@ -293,6 +310,7 @@ export function FooterOrbitInteraction() {
     >
       {shouldLoadScene ? (
         <TechOrbitScene
+          preloadedImages={preloadState.images}
           stageClassName="absolute bottom-0 right-[-2rem] z-0 h-[44rem] w-[64rem] max-w-[98vw] overflow-visible opacity-80"
           glowClassName="absolute inset-0 bg-[radial-gradient(circle_at_78%_76%,rgba(212,82,31,0.26),transparent_24%),radial-gradient(circle_at_74%_82%,rgba(255,240,220,0.08),transparent_20%),radial-gradient(circle_at_78%_82%,rgba(9,11,19,0.16),transparent_44%)]"
           sceneClassName="absolute bottom-[22rem] right-[14rem] h-0 w-0 scale-[0.78] will-change-transform xl:scale-[0.96]"

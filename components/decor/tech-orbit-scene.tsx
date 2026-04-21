@@ -3,7 +3,7 @@
 import { gsap } from "gsap";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Group, MeshBasicMaterial, Texture } from "three";
+import type { Group, MeshBasicMaterial } from "three";
 import {
   AdditiveBlending,
   CanvasTexture,
@@ -13,14 +13,16 @@ import {
   PlaneGeometry,
   RepeatWrapping,
   SRGBColorSpace,
-  TextureLoader,
+  Texture,
 } from "three";
+import { FOOTER_ORBIT_MEDIA_QUERY } from "@/lib/footer-orbit-assets";
 
 interface TechOrbitSceneProps {
   stageClassName?: string;
   glowClassName?: string;
   sceneClassName?: string;
   speedMultiplier?: number;
+  preloadedImages?: HTMLImageElement[];
 }
 
 interface BentCardProps {
@@ -44,19 +46,6 @@ interface OrbitRingProps {
   faceTextures: Texture[];
   shimmerTexture: Texture | null;
 }
-
-const ORBIT_IMAGE_URLS = [
-  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/d-park-village.jpg",
-  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/kad-undangan.png",
-  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/poster.png",
-  "https://unqsaqcwmkkjjysfwfmx.supabase.co/storage/v1/object/public/portfolio/split-bills.png",
-] as const;
-
-const ORBIT_FALLBACK_IMAGE_URLS = [
-  "/img/works/d-park-village.jpg",
-  "/img/works/kad-undangan.png",
-  "/img/works/split-bills.png",
-] as const;
 
 function TowerStructure() {
   const towerHeight = 6.4;
@@ -188,8 +177,8 @@ function createShimmerTexture() {
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 256;
+  canvas.width = 512;
+  canvas.height = 128;
 
   const ctx = canvas.getContext("2d");
 
@@ -223,9 +212,14 @@ function prepareTexture(texture: Texture) {
   texture.colorSpace = SRGBColorSpace;
   texture.minFilter = LinearFilter;
   texture.magFilter = LinearFilter;
+  texture.generateMipmaps = false;
   texture.needsUpdate = true;
 
   return texture;
+}
+
+function createFaceTexture(image: HTMLImageElement) {
+  return prepareTexture(new Texture(image));
 }
 
 function BentCard({
@@ -336,7 +330,7 @@ function OrbitRing({
   const rotationSpeed = (Math.PI * 2) / 20;
 
   const geometry = useMemo(
-    () => createBentPlaneGeometry(cardWidth, cardHeight, curveRadius, 28),
+    () => createBentPlaneGeometry(cardWidth, cardHeight, curveRadius, 22),
     [cardWidth, cardHeight, curveRadius],
   );
 
@@ -403,75 +397,13 @@ function OrbitAssembly({
 
 function OrbitCardsScene({
   speedMultiplier,
-}: Pick<TechOrbitSceneProps, "speedMultiplier">) {
-  const [faceTextures, setFaceTextures] = useState<Texture[]>([]);
+  preloadedImages = [],
+}: Pick<TechOrbitSceneProps, "speedMultiplier" | "preloadedImages">) {
   const shimmerTexture = useMemo(() => createShimmerTexture(), []);
-
-  useEffect(() => {
-    let isDisposed = false;
-    const loader = new TextureLoader();
-    loader.setCrossOrigin("anonymous");
-
-    const loadTexture = (url: string) =>
-      new Promise<Texture | null>((resolve) => {
-        loader.load(
-          url,
-          (loadedTexture) => {
-            resolve(prepareTexture(loadedTexture));
-          },
-          undefined,
-          (error) => {
-            console.error("Failed to load orbit texture:", url, error);
-            resolve(null);
-          },
-        );
-      });
-
-    const loadOrbitTextures = async () => {
-      const primaryTextures = await Promise.all(
-        ORBIT_IMAGE_URLS.map((url) => loadTexture(url)),
-      );
-      const resolvedPrimaryTextures = primaryTextures.filter(
-        (texture): texture is Texture => texture !== null,
-      );
-
-      if (resolvedPrimaryTextures.length > 0) {
-        if (isDisposed) {
-          resolvedPrimaryTextures.forEach((texture) => texture.dispose());
-          return;
-        }
-
-        setFaceTextures((currentTextures) => {
-          currentTextures.forEach((texture) => texture.dispose());
-          return resolvedPrimaryTextures;
-        });
-        return;
-      }
-
-      const fallbackTextures = await Promise.all(
-        ORBIT_FALLBACK_IMAGE_URLS.map((url) => loadTexture(url)),
-      );
-      const resolvedFallbackTextures = fallbackTextures.filter(
-        (texture): texture is Texture => texture !== null,
-      );
-
-      if (isDisposed) {
-        resolvedFallbackTextures.forEach((texture) => texture.dispose());
-        return;
-      }
-
-      setFaceTextures((currentTextures) => {
-        currentTextures.forEach((texture) => texture.dispose());
-        return resolvedFallbackTextures;
-      });
-    };
-
-    void loadOrbitTextures();
-
-    return () => {
-      isDisposed = true;
-    };
-  }, []);
+  const faceTextures = useMemo(
+    () => preloadedImages.map((image) => createFaceTexture(image)),
+    [preloadedImages],
+  );
 
   useEffect(() => {
     return () => {
@@ -480,11 +412,19 @@ function OrbitCardsScene({
     };
   }, [faceTextures, shimmerTexture]);
 
+  if (faceTextures.length === 0) {
+    return null;
+  }
+
   return (
     <Canvas
       camera={{ position: [0, 0.28, 14.2], fov: 29 }}
-      dpr={[1, 1.75]}
-      gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+      dpr={[1, 1.35]}
+      gl={{
+        alpha: true,
+        antialias: false,
+        powerPreference: "high-performance",
+      }}
       onCreated={({ gl }) => {
         gl.debug.checkShaderErrors = false;
         gl.setClearAlpha(0);
@@ -514,15 +454,14 @@ export function TechOrbitScene({
   glowClassName = "absolute inset-0 bg-[radial-gradient(circle_at_72%_72%,rgba(91,38,18,0.18),transparent_24%),radial-gradient(circle_at_78%_78%,rgba(9,11,19,0.1),transparent_44%)]",
   sceneClassName = "absolute bottom-[5.75rem] right-[9rem] h-0 w-0 scale-[0.7] will-change-transform xl:scale-[0.9]",
   speedMultiplier = 1,
+  preloadedImages = [],
 }: TechOrbitSceneProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const dustLayerRef = useRef<HTMLDivElement>(null);
   const [useStaticLayout, setUseStaticLayout] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia(
-      "(prefers-reduced-motion: reduce), (max-width: 1023px)",
-    );
+    const mediaQuery = window.matchMedia(FOOTER_ORBIT_MEDIA_QUERY);
 
     const updatePreference = () => {
       setUseStaticLayout(mediaQuery.matches);
@@ -540,7 +479,7 @@ export function TechOrbitScene({
     const stage = stageRef.current;
     const dustLayer = dustLayerRef.current;
 
-    if (useStaticLayout || !stage || !dustLayer) {
+    if (useStaticLayout || preloadedImages.length === 0 || !stage || !dustLayer) {
       return;
     }
 
@@ -582,9 +521,9 @@ export function TechOrbitScene({
       dustLayer.replaceChildren();
       ctx.revert();
     };
-  }, [useStaticLayout]);
+  }, [preloadedImages.length, useStaticLayout]);
 
-  if (useStaticLayout) {
+  if (useStaticLayout || preloadedImages.length === 0) {
     return null;
   }
 
@@ -598,7 +537,10 @@ export function TechOrbitScene({
 
       <div className={sceneClassName}>
         <div className="absolute left-1/2 top-1/2 h-[50rem] w-[54rem] overflow-visible -translate-x-1/2 -translate-y-1/2">
-          <OrbitCardsScene speedMultiplier={speedMultiplier} />
+          <OrbitCardsScene
+            speedMultiplier={speedMultiplier}
+            preloadedImages={preloadedImages}
+          />
         </div>
       </div>
 
