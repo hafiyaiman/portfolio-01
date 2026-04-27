@@ -1,4 +1,4 @@
-import { WorksPageShowcase } from "@/app/works/_components/works-page-showcase";
+import { WorksPageShowcase } from "@/app/work/_components/works-page-showcase";
 import { Navbar } from "@/components/navbar";
 
 export default function WorksPage() {

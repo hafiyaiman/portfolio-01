@@ -6,14 +6,14 @@ import { worksData } from "@/data/works-data";
 import {
   buildVisibleWheelSlots,
   type VisibleWheelSlot,
-} from "@/app/works/_components/build-visible-wheel-slots";
-import { WorksDetailsPanel } from "@/app/works/_components/works-details-panel";
-import { WheelCard } from "@/app/works/_components/works-wheel-card";
-import { useWheelRotation } from "@/app/works/_components/use-wheel-rotation";
+} from "@/app/work/_components/build-visible-wheel-slots";
+import { WorksDetailsPanel } from "@/app/work/_components/works-details-panel";
+import { WheelCard } from "@/app/work/_components/works-wheel-card";
+import { useWheelRotation } from "@/app/work/_components/use-wheel-rotation";
 import {
   getDesktopWheelLayout,
   getMobileWheelLayout,
-} from "@/app/works/_components/works-wheel.constants";
+} from "@/app/work/_components/works-wheel.constants";
 
 const WHEEL_CARD_COUNT = 10;
 
@@ -119,7 +119,9 @@ export function WorksPageShowcase() {
             className="relative z-10 flex h-full w-full items-start px-4 pb-6 pt-20 sm:px-5 sm:pt-24 lg:pr-10"
             style={{
               paddingLeft:
-                viewportWidth >= 1024 ? `${desktopLayout.contentInset}px` : undefined,
+                viewportWidth >= 1024
+                  ? `${desktopLayout.contentInset}px`
+                  : undefined,
             }}
           >
             <div className="ml-auto w-full min-w-0 max-w-[1200px]">
@@ -143,21 +145,23 @@ export function WorksPageShowcase() {
                       ref={mobileWheelRef}
                       className="relative flex h-full w-full items-center justify-center will-change-transform"
                     >
-                      {wheelItems.map(({ key, item, projectIndex, slotIndex }) => (
-                        <WheelCard
-                          key={`${key}-mobile`}
-                          item={item}
-                          projectIndex={projectIndex}
-                          slotIndex={slotIndex}
-                          activeSlotIndex={activeSlotIndex}
-                          onSelect={(nextSlotIndex, nextProjectIndex) => {
-                            setActiveSlotIndex(nextSlotIndex);
-                            setActiveProjectIndex(nextProjectIndex);
-                          }}
-                          variant="mobile"
-                          cardWidth={mobileLayout.cardWidth}
-                        />
-                      ))}
+                      {wheelItems.map(
+                        ({ key, item, projectIndex, slotIndex }) => (
+                          <WheelCard
+                            key={`${key}-mobile`}
+                            item={item}
+                            projectIndex={projectIndex}
+                            slotIndex={slotIndex}
+                            activeSlotIndex={activeSlotIndex}
+                            onSelect={(nextSlotIndex, nextProjectIndex) => {
+                              setActiveSlotIndex(nextSlotIndex);
+                              setActiveProjectIndex(nextProjectIndex);
+                            }}
+                            variant="mobile"
+                            cardWidth={mobileLayout.cardWidth}
+                          />
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
