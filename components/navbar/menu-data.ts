@@ -6,7 +6,7 @@ export interface NavbarMenuLink {
 
 export const primaryMenuLinks: NavbarMenuLink[] = [
   { href: "/", label: "HOME" },
-  { href: "/works", label: "WORK", comingSoon: true },
+  { href: "/work", label: "WORK", comingSoon: true },
   { href: "/about", label: "ABOUT", comingSoon: true },
-  { href: "/#footer", label: "CONTACT" },
+  { href: "/contact", label: "CONTACT", comingSoon: true },
 ];

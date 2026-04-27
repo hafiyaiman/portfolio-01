@@ -93,7 +93,7 @@ export function NavbarOverlay({
                 {primaryMenuLinks.map((link, index) => {
                   const isActive =
                     (link.href === "/" && pathname === "/") ||
-                    (link.href === "/works" && pathname.startsWith("/works")) ||
+                    (link.href === "/work" && pathname.startsWith("/work")) ||
                     (link.href === "/about" && pathname.startsWith("/about"));
 
                   return (
