@@ -76,7 +76,7 @@ export function NavbarTopbar({
 
   return (
     <>
-      <header className="sticky top-0 z-40 px-4 py-2 sm:px-5">
+      <header className="sticky top-0 z-[80] px-4 py-2 sm:px-5">
         <div className="mx-auto grid max-w-[1700px] grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div className="flex items-center justify-start">
             <div className="h-14 w-14 overflow-hidden sm:h-20 sm:w-20">

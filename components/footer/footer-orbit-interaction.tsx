@@ -295,7 +295,7 @@ export function FooterOrbitInteraction() {
   return (
     <div
       ref={footerScopeRef}
-      className="absolute bottom-0 right-[-2rem] z-40 h-[44rem] w-[64rem] max-w-[98vw]"
+      className="absolute bottom-0 right-[-2rem] z-40 hidden h-[44rem] w-[64rem] max-w-[98vw] lg:block"
       onPointerEnter={updateHoverState}
       onPointerMove={updateHoverState}
       onPointerLeave={() => {

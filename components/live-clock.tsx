@@ -25,7 +25,7 @@ function formatTimeParts(date: Date) {
 
 function ClockDigit({ value }: { value: string }) {
   return (
-    <span className="relative inline-flex h-[1.55em] w-[1ch] items-center justify-center overflow-hidden align-middle">
+    <span className="relative inline-flex h-[1.55em] w-[1.25ch] items-center justify-center overflow-hidden align-middle">
       <span
         key={value}
         className="absolute -inset-y-[0.14em] inset-x-0 flex items-center justify-center [animation:clockDigitSwap_0.42s_cubic-bezier(0.22,1,0.36,1)]"

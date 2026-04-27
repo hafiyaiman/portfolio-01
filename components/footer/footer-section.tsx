@@ -66,7 +66,7 @@ export function FooterSection({ standalone = true }: FooterSectionProps) {
           </div>
 
           <div className="flex flex-col items-start gap-4 lg:items-end">
-            <div className="min-h-28 w-full" />
+            <div className="min-h-28 w-full sm::block hidden" />
 
             <p className="max-w-full text-sm leading-[1.5] text-brand lg:text-right">
               {footerData.note}
@@ -84,10 +84,10 @@ export function FooterSection({ standalone = true }: FooterSectionProps) {
   return (
     <section
       id="footer"
-      className="relative overflow-hidden bg-[#150503] text-brand"
+      className="relative overflow-hidden bg-background text-brand lg:bg-[#150503]"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,82,31,0.26),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.08),transparent_20%),linear-gradient(180deg,#180604_0%,#0b0908_100%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:56px_56px] opacity-30" />
+      <div className="absolute inset-0 hidden bg-[radial-gradient(circle_at_top_left,rgba(212,82,31,0.26),transparent_32%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.08),transparent_20%),linear-gradient(180deg,#180604_0%,#0b0908_100%)] lg:block" />
+      <div className="absolute inset-0 hidden bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:56px_56px] opacity-30 lg:block" />
       {content}
     </section>
   );

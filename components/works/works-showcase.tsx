@@ -16,6 +16,8 @@ export function WorksShowcase({
   activeIndex = 0,
   onIndicatorClick,
 }: WorksShowcaseProps) {
+  const showcaseItems = worksData.items.slice(0, 3);
+  const safeActiveIndex = Math.min(activeIndex, showcaseItems.length - 1);
   const indicatorSquareRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const hasAnimatedIndicatorRef = useRef(false);
@@ -23,7 +25,7 @@ export function WorksShowcase({
 
   useEffect(() => {
     const square = indicatorSquareRef.current;
-    const activeItem = itemRefs.current[activeIndex];
+    const activeItem = itemRefs.current[safeActiveIndex];
 
     if (!square || !activeItem) return;
 
@@ -57,7 +59,7 @@ export function WorksShowcase({
         });
       },
     });
-  }, [activeIndex]);
+  }, [safeActiveIndex]);
 
   return (
     <div className="relative mx-auto max-w-[1700px] pt-10 sm:pt-16 lg:pt-24">
@@ -85,7 +87,7 @@ export function WorksShowcase({
               className="pointer-events-none absolute left-[7rem] top-0 z-20 hidden size-3 bg-[#d46a1f] lg:block"
               style={{ willChange: "transform" }}
             />
-            {worksData.items.map((item, index) => (
+            {showcaseItems.map((item, index) => (
               <button
                 type="button"
                 key={item.id}
@@ -95,14 +97,14 @@ export function WorksShowcase({
                 onClick={() => onIndicatorClick?.(index)}
                 className="group flex min-w-fit items-center gap-3 text-left transition-all duration-300 focus-visible:outline-none lg:min-w-0"
                 style={{
-                  opacity: index === activeIndex ? 1 : 0.58,
+                  opacity: index === safeActiveIndex ? 1 : 0.58,
                   transform:
-                    index === activeIndex
+                    index === safeActiveIndex
                       ? "translateX(0)"
                       : "translateX(-4px)",
                 }}
                 aria-label={`Show project ${item.title}`}
-                aria-pressed={index === activeIndex}
+                aria-pressed={index === safeActiveIndex}
               >
                 <div
                   className="relative aspect-video w-20 overflow-hidden border border-white/10 bg-[#c9c9c9] transition-all duration-300 sm:w-24"
@@ -112,9 +114,9 @@ export function WorksShowcase({
                         ? "linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.06))"
                         : `linear-gradient(135deg, ${item.accent}66, rgba(255,255,255,0.08))`,
                     transform:
-                      index === activeIndex ? "scale(1.04)" : "scale(0.96)",
+                      index === safeActiveIndex ? "scale(1.04)" : "scale(0.96)",
                     boxShadow:
-                      index === activeIndex
+                      index === safeActiveIndex
                         ? "0 0 0 1px rgba(212,82,31,0.55), 0 12px 24px rgba(0,0,0,0.24)"
                         : "none",
                   }}
@@ -136,7 +138,7 @@ export function WorksShowcase({
                   <div
                     className="absolute inset-y-0 left-0 transition-all duration-300"
                     style={{
-                      width: index === activeIndex ? "4px" : "0px",
+                      width: index === safeActiveIndex ? "4px" : "0px",
                       backgroundColor: "#d46a1f",
                     }}
                   />
@@ -189,7 +191,7 @@ export function WorksShowcase({
           ref={projectsRef}
           className="flex flex-col gap-10 will-change-transform lg:gap-14"
         >
-          {worksData.items.map((item, index) => (
+          {showcaseItems.map((item, index) => (
             <article key={item.id} data-showcase-item className="w-full">
               <div
                 className="relative aspect-video overflow-hidden border border-white/10 bg-[#111111]"
