@@ -542,7 +542,7 @@ export function GameHUD() {
           · V: switch mode · C: rear view
         </p>
         <p className="mt-2 hidden text-center text-[10px] uppercase tracking-widest text-white/80 sm:block">
-          Keyboard: W/S: Gas/Brake · A/D: Steer · Space: Handbrake · R: Reset
+          Keyboard: W/S: Gas/Brake · A/D: Steer · Space: Handbrake · R: New game
           <br className="my-0.5" />
           Controller: RT: Gas (Adaptive) · LT: Brake (ABS) · Left Stick: Steer ·
           A / X / RB: Drift · Start: Pause · Mode: {assistLevel.toUpperCase()}
@@ -649,9 +649,21 @@ export function GameHUD() {
               </button>
               <button
                 className={button}
-                onClick={() => useGameStore.getState().reset()}
+                onClick={() => {
+                  clearDrivingInput();
+                  useGameStore.getState().reset();
+                }}
               >
-                Reset car & score
+                New game
+              </button>
+              <button
+                className={button}
+                onClick={() => {
+                  clearDrivingInput();
+                  useGameStore.getState().resetInPlace();
+                }}
+              >
+                Reset here
               </button>
               <Link href="/" className={`${button} text-center`}>
                 Exit to portfolio

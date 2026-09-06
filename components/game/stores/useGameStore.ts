@@ -41,6 +41,12 @@ export const initialTelemetry: Telemetry = {
 };
 
 export type AssistLevel = "arcade" | "sport" | "pro";
+export type ResetKind = "in-place" | "new-game";
+
+function notifyCameraReset() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("genting-reset-camera"));
+}
 
 export function initAssistFromStorage() {
   if (typeof window === "undefined") return;
@@ -55,17 +61,45 @@ export function initAssistFromStorage() {
 type GameState = Telemetry & {
   paused: boolean;
   resetId: number;
+  softResetId: number;
   assistLevel: AssistLevel;
   setPaused: (paused: boolean) => void;
   setAssistLevel: (level: AssistLevel) => void;
-  reset: () => void;
+  reset: (kind?: ResetKind) => void;
+  resetInPlace: () => void;
 };
+
+function makeTelemetryReset(
+  telemetry: Pick<
+    Telemetry,
+    "controllerConnected" | "controllerName" | "adaptiveTriggerActive"
+  >,
+  score: number,
+) {
+  return {
+    ...initialTelemetry,
+    ...telemetry,
+    score,
+    gear: 1,
+    rpm: 950,
+    boost: 0,
+    throttle: 0,
+    tireSlip: 0,
+    angle: 0,
+    multiplier: 1,
+    drifting: false,
+    grounded: 0,
+    braking: false,
+    signedSpeed: 0,
+  };
+}
 
 // Physics writes via setState; the HUD subscribes imperatively, avoiding 60Hz React renders.
 export const useGameStore = create<GameState>((set) => ({
   ...initialTelemetry,
   paused: false,
   resetId: 0,
+  softResetId: 0,
   assistLevel: "sport",
   setPaused: (paused) => set({ paused }),
   setAssistLevel: (assistLevel) => {
@@ -76,14 +110,50 @@ export const useGameStore = create<GameState>((set) => ({
     }
     set({ assistLevel });
   },
-  reset: () =>
-    set((state) => ({
-      ...initialTelemetry,
-      controllerConnected: state.controllerConnected,
-      controllerName: state.controllerName,
-      adaptiveTriggerActive: state.adaptiveTriggerActive,
-      assistLevel: state.assistLevel,
-      paused: false,
-      resetId: state.resetId + 1,
-    })),
+  resetInPlace: () =>
+    set((state) => {
+      notifyCameraReset();
+      return {
+        ...makeTelemetryReset(
+          {
+            controllerConnected: state.controllerConnected,
+            controllerName: state.controllerName,
+            adaptiveTriggerActive: state.adaptiveTriggerActive,
+          },
+          state.score,
+        ),
+        assistLevel: state.assistLevel,
+        paused: false,
+        softResetId: state.softResetId + 1,
+      };
+    }),
+  reset: (kind = "new-game") =>
+    set((state) => {
+      notifyCameraReset();
+      if (kind === "in-place") {
+        return {
+          ...makeTelemetryReset(
+            {
+              controllerConnected: state.controllerConnected,
+              controllerName: state.controllerName,
+              adaptiveTriggerActive: state.adaptiveTriggerActive,
+            },
+            state.score,
+          ),
+          assistLevel: state.assistLevel,
+          paused: false,
+          softResetId: state.softResetId + 1,
+        };
+      }
+      return {
+        ...initialTelemetry,
+        controllerConnected: state.controllerConnected,
+        controllerName: state.controllerName,
+        adaptiveTriggerActive: state.adaptiveTriggerActive,
+        assistLevel: state.assistLevel,
+        paused: false,
+        resetId: state.resetId + 1,
+        softResetId: 0,
+      };
+    }),
 }));

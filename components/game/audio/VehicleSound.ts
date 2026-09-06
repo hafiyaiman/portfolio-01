@@ -1,8 +1,9 @@
 import type { Telemetry } from "../stores/useGameStore";
+import { tireMix } from "./tireMix";
 
 type Voice = { source: OscillatorNode; gain: GainNode };
 type Noise = { source: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode };
-type SoundFrame = Telemetry & { resetId: number; paused: boolean };
+type SoundFrame = Telemetry & { resetId: number; softResetId: number; paused: boolean };
 type SampleKey = "flutterMain" | "flutterShort" | "redline" | "tireSlide";
 
 /**
@@ -55,7 +56,6 @@ export class VehicleSound {
   private turboWhistle: Voice;
   private turboWhistle2: Voice;
   private intakeWhoosh: Noise;
-  private roadNoise: Noise;
 
   // Realistic drift tire friction layers:
   private tireRumble: Noise;
@@ -215,9 +215,6 @@ export class VehicleSound {
     this.tireFlutterLFO = this.oscillator(this.tireScreech.filter.frequency, "sine", 48, 85);
     this.tireFlutterLFO.gain.connect(this.tireTear.filter.frequency);
 
-    // Ambient road / wind rush
-    this.roadNoise = this.noise(highpass, "lowpass", 600, 0.6);
-
     // ─── Turbo Flutter Bus ─────────────────────────────────────────────
     this.flutterBus = this.track(context.createGain());
     this.flutterBus.gain.value = 1.0;
@@ -247,9 +244,15 @@ export class VehicleSound {
         this.buffers[key] = audioBuf;
 
         if (key === "tireSlide") {
-          this.initLoopNode(audioBuf, (src, gn) => {
+          this.initLoopNode(this.seamlessTireBuffer(audioBuf), (src, gn) => {
             gn.gain.value = 0;
-            src.connect(gn).connect(this.tireBus);
+            const lowpass = this.track(this.context.createBiquadFilter());
+            lowpass.type = "lowpass";
+            lowpass.frequency.value = 3800;
+            const highpass = this.track(this.context.createBiquadFilter());
+            highpass.type = "highpass";
+            highpass.frequency.value = 350;
+            src.connect(highpass).connect(lowpass).connect(gn).connect(this.tireBus);
             this.tireSlideLoop = { source: src, gain: gn };
           });
         }
@@ -257,6 +260,23 @@ export class VehicleSound {
         console.warn(`[VehicleSound] Failed to load ${key}:`, err);
       }
     }
+  }
+
+  private seamlessTireBuffer(buffer: AudioBuffer) {
+    const overlap = Math.min(Math.floor(buffer.sampleRate * 0.12), Math.floor(buffer.length / 4));
+    if (overlap < 2) return buffer;
+    const length = buffer.length - overlap;
+    const loop = this.context.createBuffer(buffer.numberOfChannels, length, buffer.sampleRate);
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const input = buffer.getChannelData(channel), output = loop.getChannelData(channel);
+      output.set(input.subarray(0, length));
+      // Blend the end into the beginning so playback can wrap without a click.
+      for (let i = 0; i < overlap; i++) {
+        const phase = i / (overlap - 1) * Math.PI / 2;
+        output[i] = input[length + i] * Math.cos(phase) + input[i] * Math.sin(phase);
+      }
+    }
+    return loop;
   }
 
   private initLoopNode(
@@ -482,7 +502,7 @@ export class VehicleSound {
     const active = !state.paused && !muted && volume > 0;
     this.smooth(this.master.gain, active ? volume * 0.82 : 0, 0.025);
 
-    const reset = this.previous?.resetId !== state.resetId;
+    const reset = this.previous?.resetId !== state.resetId || this.previous?.softResetId !== state.softResetId;
     if (reset) {
       this.shiftUntil = 0;
       this.lastFlutter = -10;
@@ -589,44 +609,29 @@ export class VehicleSound {
     this.smooth(this.intakeWhoosh.gain.gain, (0.01 + load * 0.16 + boost * 0.12) * cut);
 
     // ─── Real Recorded Asphalt Drift Sliding ───────────────────────────
-    const isGrounded = state.grounded > 0;
-    const slip = isGrounded ? Math.min(1.0, state.tireSlip) : 0;
-    const speed = Math.abs(state.speed);
-    const speedFactor = Math.min(1.0, Math.max(0, (speed - 2.5) / 16));
-    // Drift intensity: 0 below breakaway threshold (0.16), ramps up during slide
-    const driftIntensity = Math.max(0, slip - 0.15) * 1.6 * speedFactor;
+    const { slip, speed, intensity: driftIntensity, playbackRate } = tireMix(state, active && !reset);
+    const fade = driftIntensity > 0 ? 0.07 : 0.12;
 
     if (this.tireSlideLoop) {
-      if (slip > 0.16 && speed > 2.5) {
-        const tirePlayback = Math.max(0.82, Math.min(1.35, 0.88 + slip * 0.35 + speed * 0.006));
-        this.tireSlideLoop.source.playbackRate.setTargetAtTime(tirePlayback, now, 0.03);
-        const tireVol = Math.min(1.1, driftIntensity * 1.15);
-        this.smooth(this.tireSlideLoop.gain.gain, tireVol, 0.03);
-      } else {
-        // Complete silence when not drifting!
-        this.smooth(this.tireSlideLoop.gain.gain, 0, 0.05);
-      }
+      this.smooth(this.tireSlideLoop.source.playbackRate, playbackRate, 0.16);
+      this.smooth(this.tireSlideLoop.gain.gain, driftIntensity * 0.55, fade);
     }
 
     // Asphalt aggregate rumble (coarse road surface grind)
-    this.smooth(this.tireRumble.gain.gain, driftIntensity * 0.25, 0.04);
+    this.smooth(this.tireRumble.gain.gain, driftIntensity * 0.05, fade);
     this.smooth(this.tireRumble.filter.frequency, 320 + slip * 380 + speed * 4);
 
     // Mute synthetic screech when real tire slide sample is loaded
     const hasTireSample = !!this.tireSlideLoop;
     const screechVol = hasTireSample
       ? 0
-      : Math.max(0, slip - 0.18) * 1.2 * speedFactor * 0.4;
-    this.smooth(this.tireScreech.gain.gain, screechVol, 0.04);
-    this.smooth(this.tireTear.gain.gain, hasTireSample ? 0 : driftIntensity * 0.35, 0.04);
+      : driftIntensity * 0.22;
+    this.smooth(this.tireScreech.gain.gain, screechVol, fade);
+    this.smooth(this.tireTear.gain.gain, hasTireSample ? 0 : driftIntensity * 0.15, fade);
 
     // Smoke sizzle on deep angle slides
-    const sizzleVol = Math.max(0, slip - 0.32) * 0.22 * speedFactor;
-    this.smooth(this.tireSizzle.gain.gain, sizzleVol, 0.06);
-
-    // Ambient road texture & wind rush
-    this.smooth(this.roadNoise.gain.gain, Math.min(0.18, speed / 850) * (isGrounded ? 1 : 0.25));
-    this.smooth(this.roadNoise.filter.frequency, 300 + speed * 11);
+    const sizzleVol = hasTireSample ? 0 : driftIntensity * 0.025;
+    this.smooth(this.tireSizzle.gain.gain, sizzleVol, fade);
 
     this.previous = { ...state };
     this.wasActive = active;

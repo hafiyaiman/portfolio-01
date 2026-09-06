@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type RefObject } from "react";
 import { createPortal, useThree } from "@react-three/fiber";
 import { useAfterPhysicsStep } from "@react-three/rapier";
 import { DoubleSide } from "three";
@@ -8,14 +8,20 @@ import { S15, type S15Vehicle } from "../physics/s15Physics";
 import { useGameStore } from "../stores/useGameStore";
 import { SkidTrail } from "./skidTrail";
 
-export function SkidMarks({ vehicle }: { vehicle: S15Vehicle }) {
-  const scene = useThree(state => state.scene);
+export function SkidMarks({
+  vehicle,
+}: {
+  vehicle: S15Vehicle | RefObject<S15Vehicle | null>;
+}) {
+  const scene = useThree((state) => state.scene);
   const [trail] = useState(() => new SkidTrail());
   useEffect(() => () => trail.geometry.dispose(), [trail]);
 
   useAfterPhysicsStep(() => {
     if (useGameStore.getState().paused) return;
-    vehicle.wheels.forEach((wheel, index) => {
+    const v = "current" in vehicle ? vehicle.current : vehicle;
+    if (!v) return;
+    v.wheels.forEach((wheel, index) => {
       const longitudinal = wheel.velocity.dot(wheel.forward);
       const lateral = Math.abs(wheel.velocity.dot(wheel.right));
       const wheelspin = Math.abs(wheel.omega * S15.radius - longitudinal);

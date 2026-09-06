@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   CuboidCollider,
@@ -9,15 +9,15 @@ import {
   useRapier,
   type RapierRigidBody,
 } from "@react-three/rapier";
-import { Group } from "three";
-import { SPAWN, SPAWN_YAW } from "../environment/track";
+import { Group, Quaternion, Vector3 } from "three";
+import { nearestRoadFrame, SPAWN, SPAWN_YAW } from "../environment/track";
 import { useGameStore } from "../stores/useGameStore";
 import { drivingInput } from "./useDrivingInput";
 import { driftScore, PHYSICS_DT } from "./driftMath";
 import { SilviaModel } from "../models/SilviaModel";
 import { resolveDrive } from "./driveDirection";
 import { CarOrbitCamera } from "../camera/CarOrbitCamera";
-import { S15, S15_WHEELS, S15Vehicle, gearForSpeed } from "./s15Physics";
+import { S15, S15_STATIC_LENGTH, S15_WHEELS, S15Vehicle, gearForSpeed } from "./s15Physics";
 import { TireSmoke } from "../effects/TireSmoke";
 import { SkidMarks } from "../effects/SkidMarks";
 
@@ -25,11 +25,15 @@ export function CarController() {
   const body = useRef<RapierRigidBody>(null);
   const visual = useRef<Group>(null);
   const wheels = useRef<(Group | null)[]>([]);
-  const [vehicle] = useState(() => new S15Vehicle());
+  const vehicle = useRef<S15Vehicle | null>(null);
+  if (vehicle.current == null) {
+    vehicle.current = new S15Vehicle();
+  }
   const direction = useRef<{ direction: 1 | -1; stoppedFor: number }>({
     direction: 1,
     stoppedFor: 0,
   });
+  const lastSoftResetId = useRef(0);
   const sim = useRef({
     duration: 0,
     score: 0,
@@ -41,10 +45,65 @@ export function CarController() {
   });
   const { world, rapier } = useRapier();
 
+  const resetCarInPlace = () => {
+    const rb = body.current;
+    if (!rb) return;
+    const frame = nearestRoadFrame(new Vector3(rb.translation().x, rb.translation().y, rb.translation().z));
+    const yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
+    const upright = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw);
+    const spawnY = frame.point.y + S15.cgHeight + 0.25;
+    rb.setTranslation({ x: frame.point.x, y: spawnY, z: frame.point.z }, true);
+    rb.setRotation(upright, true);
+    rb.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    rb.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    rb.wakeUp();
+    const v = vehicle.current;
+    if (!v) return;
+    v.wheels.forEach((wheel) => {
+      wheel.length = S15_STATIC_LENGTH;
+      wheel.compression = 0;
+      wheel.load = 0;
+      wheel.omega = 0;
+      wheel.grip = 0.94;
+      wheel.contact = false;
+      wheel.slip = 0;
+      wheel.point.set(0, 0, 0);
+      wheel.normal.set(0, 1, 0);
+      wheel.velocity.set(0, 0, 0);
+      wheel.forward.set(0, 0, 1);
+      wheel.right.set(1, 0, 0);
+    });
+    v.steer = 0;
+    v.speed = 0;
+    v.forwardSpeed = 0;
+    v.beta = 0;
+    v.grounded = 0;
+    v.tireSlip = 0;
+    v.rpm = 950;
+    v.boost = 0;
+    direction.current = { direction: 1, stoppedFor: 0 };
+    sim.current = {
+      duration: 0,
+      score: useGameStore.getState().score,
+      gear: 1,
+      shiftCooldown: 0,
+      lastRoadHeight: spawnY,
+      digitalThrottle: 0,
+      digitalBrake: 0,
+    };
+  };
+
   useBeforePhysicsStep(() => {
     const rb = body.current;
-    if (!rb || useGameStore.getState().paused) return;
-    if (vehicle.grounded >= 2) sim.current.lastRoadHeight = rb.translation().y;
+    const v = vehicle.current;
+    if (!rb || !v || useGameStore.getState().paused) return;
+    const store = useGameStore.getState();
+    if (store.softResetId !== lastSoftResetId.current) {
+      lastSoftResetId.current = store.softResetId;
+      resetCarInPlace();
+      return;
+    }
+    if (v.grounded >= 2) sim.current.lastRoadHeight = rb.translation().y;
     if (rb.translation().y < sim.current.lastRoadHeight - 25) {
       useGameStore.getState().reset();
       return;
@@ -87,8 +146,8 @@ export function CarController() {
       direction.current,
       rawThrottle,
       rawBrake,
-      vehicle.forwardSpeed,
-      vehicle.speed,
+      v.forwardSpeed,
+      v.speed,
       dt,
     );
     direction.current = {
@@ -104,9 +163,9 @@ export function CarController() {
     if (
       drive.direction === 1 &&
       state.shiftCooldown === 0 &&
-      vehicle.grounded >= 3
+      v.grounded >= 3
     ) {
-      const gear = gearForSpeed(vehicle.speed, state.gear);
+      const gear = gearForSpeed(v.speed, state.gear);
       if (gear !== state.gear) {
         state.gear = gear;
         state.shiftCooldown = 0.45;
@@ -122,7 +181,7 @@ export function CarController() {
     const isHandbrake =
       drivingInput.handbrake || drivingInput.controllerHandbrake;
 
-    vehicle.step(
+    v.step(
       rb,
       world,
       rapier,
@@ -139,39 +198,41 @@ export function CarController() {
       dt,
     );
     const score = driftScore(
-      vehicle.beta,
-      vehicle.speed,
+      v.beta,
+      v.speed,
       state.duration,
       dt,
-      vehicle.grounded,
-      vehicle.forwardSpeed,
+      v.grounded,
+      v.forwardSpeed,
     );
     state.duration = score.active ? state.duration + dt : 0;
     state.score += score.points;
     useGameStore.setState({
-      speed: vehicle.speed * 3.6,
-      signedSpeed: vehicle.forwardSpeed,
+      speed: v.speed * 3.6,
+      signedSpeed: v.forwardSpeed,
       braking: drive.braking || isHandbrake,
       gear: state.gear,
-      rpm: vehicle.rpm,
-      boost: vehicle.boost,
+      rpm: v.rpm,
+      boost: v.boost,
       throttle: drive.throttle,
-      tireSlip: vehicle.tireSlip,
-      angle: (vehicle.beta * 180) / Math.PI,
+      tireSlip: v.tireSlip,
+      angle: (v.beta * 180) / Math.PI,
       score: state.score,
       multiplier: score.multiplier,
       drifting: score.active,
-      grounded: vehicle.grounded,
+      grounded: v.grounded,
     });
   });
 
   useFrame((_, delta) => {
+    const v = vehicle.current;
+    if (!v) return;
     wheels.current.forEach((wheel, index) => {
       if (!wheel) return;
-      wheel.position.y = S15_WHEELS[index][1] - vehicle.wheels[index].length;
-      wheel.rotation.y = index < 2 ? vehicle.steer : 0;
+      wheel.position.y = S15_WHEELS[index][1] - v.wheels[index].length;
+      wheel.rotation.y = index < 2 ? v.steer : 0;
       if (!useGameStore.getState().paused && wheel.children[0])
-        wheel.children[0].rotation.x += vehicle.wheels[index].omega * delta;
+        wheel.children[0].rotation.x += v.wheels[index].omega * delta;
     });
   });
 
