@@ -1,7 +1,8 @@
 // Usage: node import-genting-gpx.mjs source.gpx [startPointIndex]
 import fs from 'node:fs/promises';
+import path from 'node:path';
 const source = await fs.readFile(process.argv[2], 'utf8');
-const startIndex = Number(process.argv[3] ?? 1000);
+const startIndex = Number(process.argv[3] ?? 0);
 const all = [...source.matchAll(/<trkpt\b([^>]*)>([\s\S]*?)<\/trkpt>/g)].map(match => {
   const lat = Number(match[1].match(/\blat="([^"]+)"/)?.[1]);
   const lon = Number(match[1].match(/\blon="([^"]+)"/)?.[1]);
@@ -15,13 +16,20 @@ const origin = sourcePoints[0];
 const radius = 6371000, radians = Math.PI / 180;
 // Local tangent approximation: +X east, +Z north, +Y elevation relative to start.
 const raw = sourcePoints.map(p => [(p.lon - origin.lon) * radians * radius * Math.cos(origin.lat * radians), p.elevation, (p.lat - origin.lat) * radians * radius]);
+const endpointGap = Math.hypot(raw.at(-1)[0] - raw[0][0], raw.at(-1)[2] - raw[0][2]);
+const closed = endpointGap < 25;
+if (closed) {
+  // Replace the near-duplicate endpoint and sample the closing segment once.
+  if (endpointGap < 3) raw.pop();
+  raw.push([...raw[0]]);
+}
 const distances = [0];
 for (let i = 1; i < raw.length; i++) distances.push(distances[i - 1] + Math.hypot(raw[i][0] - raw[i - 1][0], raw[i][2] - raw[i - 1][2]));
 const length = distances.at(-1);
 const samples = [];
 let segment = 1;
 const steps = Math.ceil(length / 10);
-for (let i = 0; i <= steps; i++) {
+for (let i = 0; i < steps + (closed ? 0 : 1); i++) {
   const distance = length * i / steps;
   while (segment < raw.length - 1 && distances[segment] < distance) segment++;
   const t = (distance - distances[segment - 1]) / Math.max(0.001, distances[segment] - distances[segment - 1]);
@@ -30,15 +38,17 @@ for (let i = 0; i <= steps; i++) {
 // Gaussian elevation smoothing across roughly 100 m; no horizontal route simplification.
 const heights = samples.map((_, i) => {
   let sum = 0, weight = 0;
-  for (let j = Math.max(0, i - 10); j <= Math.min(samples.length - 1, i + 10); j++) {
-    const w = Math.exp(-0.5 * ((j - i) / 3.5) ** 2);
+  for (let offset = -10; offset <= 10; offset++) {
+    const j = closed ? (i + offset + samples.length) % samples.length : i + offset;
+    if (j < 0 || j >= samples.length) continue;
+    const w = Math.exp(-0.5 * (offset / 3.5) ** 2);
     sum += samples[j][1] * w; weight += w;
   }
   return sum / weight;
 });
 const baseline = heights[0];
 const points = samples.map((p, i) => [p[0], heights[i] - baseline + 12, p[2]].map(v => Number(v.toFixed(3))));
-const metadata = { name: 'Genting GPX uphill', source: 'User-supplied test.gpx (gpx.studio)', originalPointCount: all.length,
+const metadata = { name: closed ? 'Genting Highlands loop' : 'Genting GPX uphill', source: `User-supplied ${path.basename(process.argv[2])} (gpx.studio)`, closed, endpointGapMeters: Number(endpointGap.toFixed(2)), originalPointCount: all.length,
   sourceStartIndex: startIndex, sourceEndIndex: all.length - 1, lengthMeters: Math.round(length), origin,
   end: sourcePoints.at(-1), elevationBaseline: baseline, elevationSmoothingMeters: 100, generatedAt: new Date().toISOString(),
   accuracy: 'GPX alignment with smoothed elevation; road width, scenery and barriers are approximations.' };

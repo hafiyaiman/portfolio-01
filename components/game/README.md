@@ -2,6 +2,12 @@
 
 A playable core boilerplate for a fictional Genting/Karak-inspired closed mountain pass. Units are metres, kilograms, seconds and radians; car-local +Z is forward, +X is left from the chase camera, +Y is up. Positive yaw steers left; right input produces negative yaw.
 
+## Mountain terrain
+
+The current map uses the complete 10.1 km closed circuit from the user-supplied `New file 1.gpx`, replacing the previous 21.8 km route. The importer detects nearby endpoints, resamples the closing segment and wraps elevation smoothing across the seam. There is no finish barrier on the loop. Road, shoulder and terrain share a smoothed elevation field so repeated GPX traversals do not create vertically stacked pavement. A short grass verge joins each shoulder to a mountain shelf; there are no continuous bridge foundations. Terrain resolution increases to four metres beside the route, with shared triangle edges between detail levels. Vegetation samples those same rendered triangles. The slopes and vegetation are scenic approximations, not surveyed Genting terrain.
+
+`node components/game/environment/check-terrain.mjs` checks clearance and shoulder support along the whole route, plus the actual pavement triangle centres. `node --experimental-strip-types components/game/environment/preview-terrain.mjs` renders terrain-only previews into `tmp/` for inspecting the road-to-mountain connection without WebGL. These previews do not replace driving checks in the browser. Scene edits force a Fast Refresh remount to rebuild cached GPU geometry.
+
 ## Structure
 
 ```text

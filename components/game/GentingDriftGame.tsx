@@ -80,6 +80,8 @@ export function GentingDriftGame() {
       controllerName: state.controllerName,
       adaptiveTriggerActive: state.adaptiveTriggerActive,
       paused: false,
+      resetId: 0,
+      softResetId: 0,
     }));
   }, []);
   return (

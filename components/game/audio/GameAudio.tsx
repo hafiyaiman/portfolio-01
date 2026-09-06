@@ -61,7 +61,11 @@ export function GameAudio() {
     window.addEventListener("keydown", keyboard);
     document.addEventListener("visibilitychange", visibility);
     const unsubscribeGame = useGameStore.subscribe((state, previous) => {
-      if (state.paused !== previous.paused || state.resetId !== previous.resetId) update();
+      if (
+        state.paused !== previous.paused ||
+        state.resetId !== previous.resetId ||
+        state.softResetId !== previous.softResetId
+      ) update();
     });
     const unsubscribeAudio = useAudioStore.subscribe((state, previous) => {
       if (state.muted !== previous.muted || state.volume !== previous.volume) update();

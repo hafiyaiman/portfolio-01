@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   CanvasTexture,
@@ -72,7 +72,11 @@ function createParticles(): Particle[] {
   }));
 }
 
-export function TireSmoke({ vehicle }: { vehicle: S15Vehicle }) {
+export function TireSmoke({
+  vehicle,
+}: {
+  vehicle: S15Vehicle | RefObject<S15Vehicle | null>;
+}) {
   const meshRef = useRef<InstancedMesh>(null);
   const texture = useMemo(() => makeSmokeTexture(), []);
   const dummyMatrix = useRef(new Matrix4());
@@ -89,6 +93,8 @@ export function TireSmoke({ vehicle }: { vehicle: S15Vehicle }) {
 
   useFrame((state, delta) => {
     if (!meshRef.current) return;
+    const v = "current" in vehicle ? vehicle.current : vehicle;
+    if (!v) return;
     const clampedDelta = Math.min(delta, 0.05);
 
     emitTimer.current += clampedDelta;
@@ -96,13 +102,13 @@ export function TireSmoke({ vehicle }: { vehicle: S15Vehicle }) {
     if (canEmit) emitTimer.current = 0;
 
     // 1. Emit from slipping wheels
-    if (canEmit && vehicle.grounded >= 2) {
-      vehicle.wheels.forEach((wheel, index) => {
+    if (canEmit && v.grounded >= 2) {
+      v.wheels.forEach((wheel, index) => {
         const isRear = index >= 2;
         const slipVal = Math.abs(wheel.slip);
         const isSlipping = slipVal > 0.16;
         const isSpinning =
-          isRear && Math.abs(wheel.omega * 0.316 - vehicle.forwardSpeed) > 3.0;
+          isRear && Math.abs(wheel.omega * 0.316 - v.forwardSpeed) > 3.0;
 
         if (wheel.contact && (isSlipping || isSpinning)) {
           const p = particles.current[nextIndex.current];

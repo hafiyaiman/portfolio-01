@@ -1,22 +1,24 @@
 {
-  "name": "Genting GPX uphill",
-  "source": "User-supplied test.gpx (gpx.studio)",
-  "originalPointCount": 1895,
-  "sourceStartIndex": 1000,
-  "sourceEndIndex": 1894,
-  "lengthMeters": 21791,
+  "name": "Genting Highlands loop",
+  "source": "User-supplied New file 1.gpx (gpx.studio)",
+  "closed": true,
+  "endpointGapMeters": 1.79,
+  "originalPointCount": 460,
+  "sourceStartIndex": 0,
+  "sourceEndIndex": 459,
+  "lengthMeters": 10114,
   "origin": {
-    "lat": 3.350728,
-    "lon": 101.782318,
-    "elevation": 641.33
+    "lat": 3.410412,
+    "lon": 101.783831,
+    "elevation": 1276.47
   },
   "end": {
-    "lat": 3.423515,
-    "lon": 101.790992,
-    "elevation": 1700.49
+    "lat": 3.410404,
+    "lon": 101.783845,
+    "elevation": 1275.99
   },
-  "elevationBaseline": 643.3610510714432,
+  "elevationBaseline": 1278.150680747309,
   "elevationSmoothingMeters": 100,
-  "generatedAt": "2026-09-06T02:15:47.267Z",
+  "generatedAt": "2026-09-06T09:25:53.210Z",
   "accuracy": "GPX alignment with smoothed elevation; road width, scenery and barriers are approximations."
 }
