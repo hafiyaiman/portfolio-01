@@ -1,0 +1,22 @@
+{
+  "name": "Genting GPX uphill",
+  "source": "User-supplied test.gpx (gpx.studio)",
+  "originalPointCount": 1895,
+  "sourceStartIndex": 1000,
+  "sourceEndIndex": 1894,
+  "lengthMeters": 21791,
+  "origin": {
+    "lat": 3.350728,
+    "lon": 101.782318,
+    "elevation": 641.33
+  },
+  "end": {
+    "lat": 3.423515,
+    "lon": 101.790992,
+    "elevation": 1700.49
+  },
+  "elevationBaseline": 643.3610510714432,
+  "elevationSmoothingMeters": 100,
+  "generatedAt": "2026-09-06T02:15:47.267Z",
+  "accuracy": "GPX alignment with smoothed elevation; road width, scenery and barriers are approximations."
+}
