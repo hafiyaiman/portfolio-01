@@ -24,7 +24,10 @@ export function WheelCard({
   variant,
   cardWidth,
 }: WheelCardProps) {
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [activeImageState, setActiveImageState] = useState({
+    itemId: item.id,
+    index: 0,
+  });
   const [isHovered, setIsHovered] = useState(false);
   const isActive = slotIndex === activeSlotIndex;
   const sizes = variant === "desktop" ? "600px" : "120px";
@@ -38,30 +41,30 @@ export function WheelCard({
     [item.imageAlt, item.imageSrc, item.previewImages],
   );
 
-  useEffect(() => {
-    setActiveImageIndex(0);
-  }, [item.id]);
+  const activeImageIndex =
+    activeImageState.itemId === item.id && isActive
+      ? activeImageState.index % previewImages.length
+      : 0;
 
   useEffect(() => {
-    if (!isActive) {
-      setActiveImageIndex(0);
-      return;
-    }
-
-    if (isHovered || previewImages.length <= 1) {
+    if (!isActive || isHovered || previewImages.length <= 1) {
       return;
     }
 
     const intervalId = window.setInterval(() => {
-      setActiveImageIndex(
-        (currentIndex) => (currentIndex + 1) % previewImages.length,
-      );
+      setActiveImageState((current) => ({
+        itemId: item.id,
+        index:
+          current.itemId === item.id
+            ? (current.index + 1) % previewImages.length
+            : 1 % previewImages.length,
+      }));
     }, CAROUSEL_INTERVAL_MS);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isActive, isHovered, previewImages.length]);
+  }, [isActive, isHovered, item.id, previewImages.length]);
 
   return (
     <button
