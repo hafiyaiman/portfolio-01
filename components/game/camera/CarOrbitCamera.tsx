@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type ComponentRef, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Group, Quaternion, Vector3 } from "three";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { useCameraStore } from "./useCameraStore";
 import { useGameStore } from "../stores/useGameStore";
 
+type OrbitControlsRef = ComponentRef<typeof OrbitControls>;
+
 export function CarOrbitCamera({ car }: { car: RefObject<Group | null> }) {
-  const controls = useRef<OrbitControlsImpl>(null);
+  const controls = useRef<OrbitControlsRef>(null);
   const reset = useRef(true);
   const mode = useCameraStore((state) => state.mode);
   const scratch = useRef({ position: new Vector3(), delta: new Vector3(), forward: new Vector3(), desired: new Vector3(), look: new Vector3(), rotation: new Quaternion() });
