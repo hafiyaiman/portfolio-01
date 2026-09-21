@@ -26,17 +26,30 @@ export function SkidMarks({
       const lateral = Math.abs(wheel.velocity.dot(wheel.right));
       const wheelspin = Math.abs(wheel.omega * S15.radius - longitudinal);
       // Actual per-tire slip, not chassis velocity or ordinary brake-pedal input.
-      const slipping = lateral > 0.8 && Math.abs(wheel.slip) > 0.12 || wheelspin > 2.5;
-      const intensity = wheel.contact && wheel.load > 100 && slipping
-        ? Math.max(lateral / 6, wheelspin / 10) : 0;
+      const slipping =
+        (lateral > 0.8 && Math.abs(wheel.slip) > 0.12) || wheelspin > 2.5;
+      const intensity =
+        wheel.contact && wheel.load > 100 && slipping
+          ? Math.max(lateral / 6, wheelspin / 10)
+          : 0;
       trail.sample(index, wheel, intensity);
     });
     trail.commit();
   });
 
   // Contact vertices are already world-space. Never inherit the car's transform.
-  return createPortal(<mesh geometry={trail.geometry} frustumCulled={false} renderOrder={1}>
-    <meshBasicMaterial vertexColors transparent depthWrite={false} side={DoubleSide}
-      polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
-  </mesh>, scene);
+  return createPortal(
+    <mesh geometry={trail.geometry} frustumCulled={false} renderOrder={1}>
+      <meshBasicMaterial
+        vertexColors
+        transparent
+        depthWrite={false}
+        side={DoubleSide}
+        polygonOffset
+        polygonOffsetFactor={-1}
+        polygonOffsetUnits={-1}
+      />
+    </mesh>,
+    scene,
+  );
 }

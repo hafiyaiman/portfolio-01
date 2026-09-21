@@ -4,24 +4,36 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   CuboidCollider,
+  RoundCuboidCollider,
   RigidBody,
   useBeforePhysicsStep,
   useRapier,
   type RapierRigidBody,
 } from "@react-three/rapier";
 import { Group, Quaternion, Vector3 } from "three";
-import { nearestRoadFrame, SPAWN, SPAWN_YAW } from "../environment/track";
+import type { DrivingRoute } from "../environment/importedWorld";
 import { useGameStore } from "../stores/useGameStore";
 import { drivingInput } from "./useDrivingInput";
 import { driftScore, PHYSICS_DT } from "./driftMath";
 import { SilviaModel } from "../models/SilviaModel";
 import { resolveDrive } from "./driveDirection";
 import { CarOrbitCamera } from "../camera/CarOrbitCamera";
-import { S15, S15_STATIC_LENGTH, S15_WHEELS, S15Vehicle, gearForSpeed } from "./s15Physics";
+import {
+  S15,
+  S15_STATIC_LENGTH,
+  S15_WHEELS,
+  S15Vehicle,
+  gearForSpeed,
+} from "./s15Physics";
 import { TireSmoke } from "../effects/TireSmoke";
 import { SkidMarks } from "../effects/SkidMarks";
 
-export function CarController() {
+export function CarController({ route }: { route: DrivingRoute }) {
+  const {
+    spawn: SPAWN,
+    spawnYaw: SPAWN_YAW,
+    nearestFrame: nearestRoadFrame,
+  } = route;
   const body = useRef<RapierRigidBody>(null);
   const visual = useRef<Group>(null);
   const wheels = useRef<(Group | null)[]>([]);
@@ -48,9 +60,14 @@ export function CarController() {
   const resetCarInPlace = () => {
     const rb = body.current;
     if (!rb) return;
-    const frame = nearestRoadFrame(new Vector3(rb.translation().x, rb.translation().y, rb.translation().z));
+    const frame = nearestRoadFrame(
+      new Vector3(rb.translation().x, rb.translation().y, rb.translation().z),
+    );
     const yaw = Math.atan2(frame.tangent.x, frame.tangent.z);
-    const upright = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw);
+    const upright = new Quaternion().setFromAxisAngle(
+      new Vector3(0, 1, 0),
+      yaw,
+    );
     const spawnY = frame.point.y + S15.cgHeight + 0.25;
     rb.setTranslation({ x: frame.point.x, y: spawnY, z: frame.point.z }, true);
     rb.setRotation(upright, true);
@@ -160,11 +177,7 @@ export function CarController() {
       state.gear = 1;
       state.shiftCooldown = 0.45;
     }
-    if (
-      drive.direction === 1 &&
-      state.shiftCooldown === 0 &&
-      v.grounded >= 3
-    ) {
+    if (drive.direction === 1 && state.shiftCooldown === 0 && v.grounded >= 3) {
       const gear = gearForSpeed(v.speed, state.gear);
       if (gear !== state.gear) {
         state.gear = gear;
@@ -207,7 +220,15 @@ export function CarController() {
     );
     state.duration = score.active ? state.duration + dt : 0;
     state.score += score.points;
+    const mapPosition = rb.translation();
+    const mapRotation = rb.rotation();
     useGameStore.setState({
+      positionX: mapPosition.x,
+      positionZ: mapPosition.z,
+      heading: Math.atan2(
+        2 * (mapRotation.x * mapRotation.z + mapRotation.w * mapRotation.y),
+        1 - 2 * (mapRotation.x ** 2 + mapRotation.y ** 2),
+      ),
       speed: v.speed * 3.6,
       signedSpeed: v.forwardSpeed,
       braking: drive.braking || isHandbrake,
@@ -248,10 +269,10 @@ export function CarController() {
         ccd
       >
         {/* Collider-local COM offsets put the actual mass center at the body origin. */}
-        <CuboidCollider
-          args={[0.8, 0.15, 2.1]}
-          position={[0, -0.1, 0]}
-          friction={0.25}
+        <RoundCuboidCollider
+          args={[0.78, 0.12, 2.05, 0.05]}
+          position={[0, -0.07, 0]}
+          friction={0.2}
           restitution={0.02}
           massProperties={{
             mass: S15.mass,

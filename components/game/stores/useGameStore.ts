@@ -3,6 +3,9 @@
 import { create } from "zustand";
 
 export type Telemetry = {
+  positionX: number;
+  positionZ: number;
+  heading: number;
   speed: number;
   signedSpeed: number;
   braking: boolean;
@@ -22,6 +25,9 @@ export type Telemetry = {
 };
 
 export const initialTelemetry: Telemetry = {
+  positionX: 0,
+  positionZ: 0,
+  heading: 0,
   speed: 0,
   signedSpeed: 0,
   braking: false,
@@ -157,3 +163,7 @@ export const useGameStore = create<GameState>((set) => ({
       };
     }),
 }));
+
+if (typeof window !== "undefined") {
+  (window as unknown as { __GAME_STORE__: typeof useGameStore }).__GAME_STORE__ = useGameStore;
+}

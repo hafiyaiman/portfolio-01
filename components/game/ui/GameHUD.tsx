@@ -56,7 +56,7 @@ function TouchButton({
   );
 }
 
-function ControllerDiagnosticsModal({ onClose }: { onClose: () => void }) {
+export function ControllerDiagnosticsModal({ onClose }: { onClose: () => void }) {
   const [info, setInfo] = useState<{
     supported: boolean;
     secure: boolean;

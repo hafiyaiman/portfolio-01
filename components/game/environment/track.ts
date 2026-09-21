@@ -5,7 +5,8 @@ export { ROUTE_INFO };
 export const roadCurve = new CatmullRomCurve3(ROUTE_POINTS.map(p => new Vector3(...p)), ROUTE_INFO.closed, "centripetal");
 roadCurve.arcLengthDivisions = ROUTE_POINTS.length * 8;
 export const ROAD_LENGTH = roadCurve.getLength();
-export const ROAD_WIDTH = 10;
+// A deliberately widened drift course; all roadside offsets derive from this width.
+export const ROAD_WIDTH = 18;
 export const ROAD_SEGMENTS = Math.ceil(ROAD_LENGTH / 1.5);
 const ROUTE_SAMPLE_COUNT = ROUTE_POINTS.length - 1;
 
@@ -42,7 +43,8 @@ export function roadSurfaceHeightAt(px: number, pz: number) {
     for (const i of sourceBins.get(`${x}:${z}`) ?? []) {
       const p = sourceSamples[i];
       const d = (p.x - px) ** 2 + (p.z - pz) ** 2;
-      const weight = Math.exp(-d / 72);
+      // Broader elevation smoothing keeps the widened hairpin shoulders driveable.
+      const weight = Math.exp(-d / 260);
       sum += p.y * weight; weights += weight;
     }
   }
@@ -112,9 +114,55 @@ function buildJunctionPads() {
 
 export const JUNCTION_PADS = buildJunctionPads();
 const frames = Array.from({ length: ROAD_SEGMENTS + 1 }, (_, i) => roadFrame(i / ROAD_SEGMENTS));
-// Start on a gentle stretch near the GPX origin so all wheels settle together.
-export const SPAWN_DISTANCE = Array.from({ length: 30 }, (_, i) => 12 + i * 10)
-  .find(distance => Math.abs(roadFrame(distance / ROAD_LENGTH).tangent.y) < 0.07) ?? 12;
+
+// Offsetting a GPX curve does not produce the boundary of its overlapping
+// pavement. Clip roadside infrastructure against the complete road corridor.
+const boundaryBins = new Map<string, number[]>();
+frames.slice(0, -1).forEach(({ point: a }, i) => {
+  const b = frames[i + 1].point;
+  for (let x = Math.floor(Math.min(a.x, b.x) / 32); x <= Math.floor(Math.max(a.x, b.x) / 32); x++) {
+    for (let z = Math.floor(Math.min(a.z, b.z) / 32); z <= Math.floor(Math.max(a.z, b.z) / 32); z++) {
+      const key = `${x}:${z}`;
+      if (!boundaryBins.has(key)) boundaryBins.set(key, []);
+      boundaryBins.get(key)!.push(i);
+    }
+  }
+});
+
+function insideRoadCorridor(p: Vector3, radius: number) {
+  const bx = Math.floor(p.x / 32), bz = Math.floor(p.z / 32);
+  for (let x = bx - 1; x <= bx + 1; x++) for (let z = bz - 1; z <= bz + 1; z++) {
+    for (const i of boundaryBins.get(`${x}:${z}`) ?? []) {
+      const a = frames[i].point, b = frames[i + 1].point;
+      const dx = b.x - a.x, dz = b.z - a.z;
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      if ((p.x - a.x - t * dx) ** 2 + (p.z - a.z - t * dz) ** 2 < radius ** 2) return true;
+    }
+  }
+  return false;
+}
+
+export function isRoadsidePosition(p: Vector3, clearance = ROAD_WIDTH / 2 + 0.45) {
+  return !insideRoadCorridor(p, clearance);
+}
+
+const roadsideSegments = new Map<number, boolean[]>();
+for (const side of [-1, 1]) {
+  roadsideSegments.set(side, frames.slice(0, -1).map((frame, i) => {
+    for (const offset of [ROAD_WIDTH / 2 - 0.225, ROAD_WIDTH / 2, ROAD_WIDTH / 2 + 0.65]) {
+      const a = frame.point.clone().addScaledVector(frame.right, side * offset);
+      const b = frames[i + 1].point.clone().addScaledVector(frames[i + 1].right, side * offset);
+      const steps = Math.max(2, Math.ceil(a.distanceTo(b) / 0.25));
+      for (let j = 0; j <= steps; j++) {
+        const p = a.clone().lerp(b, j / steps);
+        if (insideRoadCorridor(p, offset - 0.1)) return false;
+      }
+    }
+    return true;
+  }));
+}
+// Start on a gentle, verified stretch on the surveyed road where all wheels settle together.
+export const SPAWN_DISTANCE = 250;
 export const SPAWN = roadFrame(SPAWN_DISTANCE / ROAD_LENGTH).point;
 const spawnTangent = roadFrame(SPAWN_DISTANCE / ROAD_LENGTH).tangent;
 export const SPAWN_YAW = Math.atan2(spawnTangent.x, spawnTangent.z);
@@ -127,7 +175,7 @@ function stripGeometry(vertices: number[], indices: number[]) {
   return geometry;
 }
 
-export function createRoadStrip(width: number, offset = 0, height = 0) {
+export function createRoadStrip(width: number, offset = 0, height = 0, clipRoadside = false) {
   const positions: number[] = [], indices: number[] = [];
   const columns = Math.max(1, Math.ceil(width / 2));
   frames.forEach(({ point, right }, i) => {
@@ -135,7 +183,7 @@ export function createRoadStrip(width: number, offset = 0, height = 0) {
       const vertex = point.clone().addScaledVector(right, offset - width / 2 + width * j / columns);
       positions.push(vertex.x, roadSurfaceHeightAt(vertex.x, vertex.z) + height, vertex.z);
     }
-    if (i < ROAD_SEGMENTS) for (let j = 0; j < columns; j++) {
+    if (i < ROAD_SEGMENTS && (!clipRoadside || roadsideSegments.get(Math.sign(offset))![i])) for (let j = 0; j < columns; j++) {
       const a = i * (columns + 1) + j, b = a + columns + 1;
       indices.push(a, b, a + 1, a + 1, b, b + 1);
     }
@@ -158,10 +206,140 @@ export function createBarrier(side: number) {
     const p = point.clone().addScaledVector(right, side * (ROAD_WIDTH / 2 + 0.65));
     p.y = roadSurfaceHeightAt(p.x, p.z);
     positions.push(p.x, p.y, p.z, p.x, p.y + 0.8, p.z);
-    if (i < ROAD_SEGMENTS && !JUNCTION_PADS.some(junction =>
+    if (i < ROAD_SEGMENTS && roadsideSegments.get(side)![i] && !JUNCTION_PADS.some(junction =>
       Math.hypot(p.x - junction.point.x, p.z - junction.point.z) < junction.radius + 8)) {
       const a = i * 2;
       indices.push(a, a + 1, a + 2, a + 2, a + 1, a + 3);
+    }
+  });
+  return stripGeometry(positions, indices);
+}
+
+/** Visual W-beam corrugated guardrail (separate from physics barrier). */
+export function createWBeamGuardrail(side: number) {
+  const positions: number[] = [], indices: number[] = [];
+  // 5-point cross-section per frame: bottom-lip, lower-ridge, valley, upper-ridge, top-lip
+  frames.forEach(({ point, right }, i) => {
+    const base = point.clone().addScaledVector(right, side * (ROAD_WIDTH / 2 + 0.65));
+    const outward = side * 0.05;
+    const y = roadSurfaceHeightAt(base.x, base.z);
+    const pts = [
+      base.clone(),
+      base.clone().addScaledVector(right, outward),
+      base.clone(),
+      base.clone().addScaledVector(right, outward),
+      base.clone(),
+    ];
+    const ys = [y + 0.40, y + 0.50, y + 0.60, y + 0.70, y + 0.80];
+    pts.forEach((p, j) => positions.push(p.x, ys[j], p.z));
+    if (i < ROAD_SEGMENTS && roadsideSegments.get(side)![i] && !JUNCTION_PADS.some(junction =>
+      Math.hypot(base.x - junction.point.x, base.z - junction.point.z) < junction.radius + 8)) {
+      for (let j = 0; j < 4; j++) {
+        const a = i * 5 + j, b = a + 5;
+        indices.push(a, b, a + 1, a + 1, b, b + 1);
+      }
+    }
+  });
+  return stripGeometry(positions, indices);
+}
+
+/** Positions for guardrail posts, every ~4.5m on both sides, avoiding junctions. */
+export const guardRailPostPositions = Array.from({ length: Math.ceil(ROAD_LENGTH / 4.5) }, (_, i) => {
+  const t = (i * 4.5) / ROAD_LENGTH;
+  const { point, right } = roadFrame(t);
+  const side = i % 2 === 0 ? 1 : -1;
+  const p = point.clone().addScaledVector(right, side * (ROAD_WIDTH / 2 + 0.65));
+  const segment = Math.min(ROAD_SEGMENTS - 1, Math.floor(t * ROAD_SEGMENTS));
+  if (!roadsideSegments.get(side)![segment] || insideRoadCorridor(p, ROAD_WIDTH / 2 + 0.45)) return null;
+  if (JUNCTION_PADS.some(junction =>
+    Math.hypot(p.x - junction.point.x, p.z - junction.point.z) < junction.radius + 8)) return null;
+  const y = roadSurfaceHeightAt(p.x, p.z);
+  if (!isFinite(y)) return null;
+  p.y = y;
+  return { position: p, side };
+}).filter(Boolean) as { position: Vector3; side: number }[];
+
+/** Cat-eye reflectors every 18m on road edge — both sides. */
+export const catEyePositions = Array.from({ length: Math.ceil(ROAD_LENGTH / 18) * 2 }, (_, i) => {
+  const idx = Math.floor(i / 2);
+  const side = i % 2 === 0 ? 1 : -1;
+  const t = (idx * 18) / ROAD_LENGTH;
+  const { point, right } = roadFrame(t);
+  const p = point.clone().addScaledVector(right, side * (ROAD_WIDTH / 2 - 0.45));
+  p.y = roadSurfaceHeightAt(p.x, p.z) + 0.015;
+  return { position: p };
+});
+
+/** White shoulder edge line, 0.15m wide, slightly above road surface. */
+export function createShoulderLine(side: number) {
+  return createRoadStrip(0.15, side * (ROAD_WIDTH / 2 - 0.15), 0.014, true);
+}
+
+/** Malaysian-style double yellow center line and white shoulder markings.
+ *  Returns a 'dashed' strip (center single for straights) and 'solid' strip (parallel double for full use). */
+export function createCenterMarkings() {
+  // Two parallel solid yellow lines flanking the center — standard Malaysian mountain road
+  return {
+    dashed: createRoadStrip(0.12, -0.18, 0.020),   // left of center
+    solid:  createRoadStrip(0.12,  0.18, 0.020),   // right of center
+  };
+}
+
+
+/** Yellow transverse rumble strips at the approach to the sharpest hairpin bends. */
+export function createYellowRumbleStrips() {
+  const eps = 2 / ROAD_SEGMENTS;
+  const scores = Array.from({ length: ROAD_SEGMENTS }, (_, i) => {
+    const t = i / ROAD_SEGMENTS;
+    const tA = roadFrame(Math.max(0, t - eps)).tangent;
+    const tB = roadFrame(Math.min(1, t + eps)).tangent;
+    return { t, curvature: 1 - tA.dot(tB) };
+  }).sort((a, b) => b.curvature - a.curvature);
+
+  const peaks: number[] = [];
+  for (const { t } of scores) {
+    if (peaks.every(p => Math.abs(t - p) * ROAD_LENGTH > 60)) peaks.push(t);
+    if (peaks.length >= 8) break;
+  }
+
+  const positions: number[] = [], indices: number[] = [];
+  for (const t of peaks) {
+    const approachT = Math.max(0, t - 30 / ROAD_LENGTH);
+    for (let bar = 0; bar < 7; bar++) {
+      const barT = routeParameter(approachT + (bar * 0.9) / ROAD_LENGTH);
+      const { point, right, tangent } = roadFrame(barT);
+      // Use tangent directly — avoids zero-length vector near route end
+      const fwd = tangent.clone();
+      const halfW = ROAD_WIDTH / 2 - 0.2;
+      const base = positions.length / 3;
+      for (const s of [-halfW, halfW]) {
+        const near = point.clone().addScaledVector(right, s);
+        const far = near.clone().addScaledVector(fwd, 0.4);
+        [near, far].forEach(p => positions.push(p.x, roadSurfaceHeightAt(p.x, p.z) + 0.025, p.z));
+      }
+      // left-near=base, left-far=base+1, right-near=base+2, right-far=base+3
+      indices.push(base, base + 2, base + 1, base + 1, base + 2, base + 3);
+    }
+  }
+  return stripGeometry(positions, indices);
+}
+
+/** Bevelled concrete curb strip along the road edge. */
+export function createRoadCurb(side: number) {
+  const positions: number[] = [], indices: number[] = [];
+  frames.forEach(({ point, right }, i) => {
+    const inner = point.clone().addScaledVector(right, side * ROAD_WIDTH / 2);
+    const outer = point.clone().addScaledVector(right, side * (ROAD_WIDTH / 2 + 0.35));
+    const iy = roadSurfaceHeightAt(inner.x, inner.z);
+    positions.push(
+      inner.x, iy,        inner.z,
+      inner.x, iy + 0.10, inner.z,
+      outer.x, iy + 0.10, outer.z,
+      outer.x, roadSurfaceHeightAt(outer.x, outer.z), outer.z,
+    );
+    if (i < ROAD_SEGMENTS && roadsideSegments.get(side)![i]) for (let j = 0; j < 3; j++) {
+      const a = i * 4 + j, b = a + 4;
+      indices.push(a, b, a + 1, a + 1, b, b + 1);
     }
   });
   return stripGeometry(positions, indices);
@@ -318,9 +496,9 @@ export function createRoadVerge() {
   for (const side of [-1, 1]) {
     const start = positions.length / 3;
     frames.forEach(({ point, right }, i) => {
-      for (const offset of [7, 8.5, 10]) {
+      for (const offset of [ROAD_WIDTH / 2 + 1, ROAD_WIDTH / 2 + 2.5, ROAD_WIDTH / 2 + 4]) {
         const edge = point.clone().addScaledVector(right, side * offset);
-        const y = offset === 7 ? roadSurfaceHeightAt(edge.x, edge.z) - 0.08 : terrainHeightAt(edge.x, edge.z) + 0.015;
+        const y = offset === ROAD_WIDTH / 2 + 1 ? roadSurfaceHeightAt(edge.x, edge.z) - 0.08 : terrainHeightAt(edge.x, edge.z) + 0.015;
         positions.push(edge.x, y, edge.z);
       }
       if (i < ROAD_SEGMENTS) for (let j = 0; j < 2; j++) {

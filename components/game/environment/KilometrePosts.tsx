@@ -4,7 +4,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useTexture } from "@react-three/drei";
 import { ExtrudeGeometry, Shape, SRGBColorSpace } from "three";
-import { ROAD_LENGTH, SPAWN_DISTANCE, roadFrame, terrainHeightAt } from "./track";
+import {
+  ROAD_LENGTH,
+  SPAWN_DISTANCE,
+  roadFrame,
+  terrainHeightAt,
+} from "./track";
 
 export type KilometrePost = {
   km: number;
@@ -98,7 +103,14 @@ function postGeometry(height: number, major: boolean) {
   shape.lineTo(0.34, height - (major ? 0.18 : 0));
   shape.lineTo(-0.34, height);
   shape.closePath();
-  const geometry = new ExtrudeGeometry(shape, { depth: 0.24, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 1, steps: 1 });
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: 0.24,
+    bevelEnabled: true,
+    bevelThickness: 0.012,
+    bevelSize: 0.012,
+    bevelSegments: 1,
+    steps: 1,
+  });
   geometry.translate(0, 0, -0.12);
   return geometry;
 }
@@ -112,26 +124,48 @@ function PaintedFace({ post }: { post: KilometrePost }) {
     },
   );
   const height = post.major ? 1.52 : 1.24;
-  return <mesh position={[0, post.footingHeight + height / 2 + 0.06, 0.135]}>
-    <planeGeometry args={[0.6, height]} />
-    <meshStandardMaterial map={texture} roughness={0.95} />
-  </mesh>;
+  return (
+    <mesh position={[0, post.footingHeight + height / 2 + 0.06, 0.135]}>
+      <planeGeometry args={[0.6, height]} />
+      <meshStandardMaterial map={texture} roughness={0.95} />
+    </mesh>
+  );
 }
 
 export function KilometrePosts() {
   const [posts] = useState(createKilometrePosts);
-  const [geometry] = useState(() => ({ major: postGeometry(1.86, true), minor: postGeometry(1.4, false) }));
-  useEffect(() => () => Object.values(geometry).forEach(item => item.dispose()), [geometry]);
-  return <group name="Malaysian kilometre posts">
-    {posts.map(post => <group key={post.km} name={`KM ${post.km} / Type ${post.major ? "A" : "B"}`} position={post.position} rotation={[0, post.yaw, 0]}>
-      <mesh position={[0, post.footingHeight / 2, 0]}>
-        <boxGeometry args={[0.96, post.footingHeight, 0.68]} />
-        <meshStandardMaterial color="#b7b8ac" roughness={1} />
-      </mesh>
-      <mesh geometry={post.major ? geometry.major : geometry.minor} position={[0, post.footingHeight, 0]}>
-        <meshStandardMaterial color="#e3e1d5" roughness={1} />
-      </mesh>
-      <Suspense fallback={null}><PaintedFace post={post} /></Suspense>
-    </group>)}
-  </group>;
+  const [geometry] = useState(() => ({
+    major: postGeometry(1.86, true),
+    minor: postGeometry(1.4, false),
+  }));
+  useEffect(
+    () => () => Object.values(geometry).forEach((item) => item.dispose()),
+    [geometry],
+  );
+  return (
+    <group name="Malaysian kilometre posts">
+      {posts.map((post) => (
+        <group
+          key={post.km}
+          name={`KM ${post.km} / Type ${post.major ? "A" : "B"}`}
+          position={post.position}
+          rotation={[0, post.yaw, 0]}
+        >
+          <mesh position={[0, post.footingHeight / 2, 0]}>
+            <boxGeometry args={[0.96, post.footingHeight, 0.68]} />
+            <meshStandardMaterial color="#b7b8ac" roughness={1} />
+          </mesh>
+          <mesh
+            geometry={post.major ? geometry.major : geometry.minor}
+            position={[0, post.footingHeight, 0]}
+          >
+            <meshStandardMaterial color="#e3e1d5" roughness={1} />
+          </mesh>
+          <Suspense fallback={null}>
+            <PaintedFace post={post} />
+          </Suspense>
+        </group>
+      ))}
+    </group>
+  );
 }

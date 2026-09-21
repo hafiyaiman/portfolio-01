@@ -1,0 +1,40 @@
+{
+  "format": "maps3d-georeference",
+  "version": 1,
+  "crs": "EPSG:3857",
+  "crsName": "Web Mercator",
+  "sceneOriginProjected": {
+    "easting": 11331209.298054956,
+    "northing": 380742.6683470971
+  },
+  "northRotationDeg": 0,
+  "printScaleMmPerMeter": 0.103416725539722,
+  "verticalExaggeration": 1,
+  "footprintCornersLngLat": [
+    [
+      101.79954,
+      3.42721
+    ],
+    [
+      101.79954,
+      3.40927
+    ],
+    [
+      101.78043,
+      3.40927
+    ],
+    [
+      101.78043,
+      3.42721
+    ],
+    [
+      101.79954,
+      3.42721
+    ],
+    [
+      101.79954,
+      3.42721
+    ]
+  ],
+  "notes": "The model's horizontal origin is sceneOriginProjected (in crs). When northRotationDeg is non-zero, the exported model was rotated by that many degrees so the selection's edges are axis-aligned in the file; to recover real-world coordinates, rotate model plan coordinates back by northRotationDeg (clockwise, about the origin) and add sceneOriginProjected, dividing by printScaleMmPerMeter/1000 first if the export was print-resized. footprintCornersLngLat pins the model footprint's corners to the ground directly."
+}

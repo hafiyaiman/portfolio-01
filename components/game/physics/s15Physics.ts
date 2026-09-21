@@ -254,17 +254,18 @@ export class S15Vehicle {
     this.tireSlip = 0;
 
     // Gather all contacts before applying axle-coupled anti-roll forces.
+    const RAY_HEADROOM = 0.35; // Start raycast 35cm above axle mount so dips/curbs/penetrations never cause ray origin to fall below road surface
     this.wheels.forEach((wheel, i) => {
       const axle = i < 2 ? 0 : 1;
       const mount = S15_WHEELS[i];
       this.origin
-        .set(mount[0], mount[1], mount[2])
+        .set(mount[0], mount[1] + RAY_HEADROOM, mount[2])
         .applyQuaternion(this.q)
         .add(this.p);
       this.down.copy(this.up).negate();
       const hit = world.castRayAndGetNormal(
         new rapier.Ray(this.origin, this.down),
-        S15_REST[axle] + S15.radius,
+        RAY_HEADROOM + S15_REST[axle] + S15.radius,
         true,
         undefined,
         undefined,
@@ -276,8 +277,13 @@ export class S15Vehicle {
       wheel.load = 0;
       if (!hit || !wheel.contact) return;
       this.grounded++;
-      wheel.length = clamp(hit.timeOfImpact - S15.radius, 0, S15_REST[axle]);
-      wheel.compression = S15_REST[axle] - wheel.length;
+      const effectiveLength = hit.timeOfImpact - RAY_HEADROOM - S15.radius;
+      wheel.length = clamp(
+        effectiveLength,
+        S15.minLength * 0.25,
+        S15_REST[axle],
+      );
+      wheel.compression = S15_REST[axle] - effectiveLength;
       wheel.point
         .copy(this.origin)
         .addScaledVector(this.down, hit.timeOfImpact);
@@ -293,14 +299,14 @@ export class S15Vehicle {
       // Digressive damping limits sharp-impact forces. Bump stop ramps progressively.
       const damperForce =
         (damping * travelVelocity) / (1 + Math.abs(travelVelocity) / 1.5);
-      const bump = Math.max(0, S15.minLength - wheel.length);
+      const bump = Math.max(0, S15.minLength - effectiveLength);
       wheel.load = clamp(
         (S15.spring[axle] * wheel.compression -
           damperForce +
           650000 * bump * bump) /
           alignment,
         0,
-        12000,
+        18000,
       );
     });
     for (let axle = 0; axle < 2; axle++) {
