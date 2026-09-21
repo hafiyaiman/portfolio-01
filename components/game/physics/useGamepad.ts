@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useGameStore, type Telemetry } from "../stores/useGameStore";
 import { drivingInput } from "./useDrivingInput";
 import { useCameraStore } from "../camera/useCameraStore";
+import { useControllerSettings } from "../stores/useControllerSettings";
 
 const STICK_DEADZONE = 0.08;
 const TRIGGER_DEADZONE = 0.04;
@@ -233,6 +234,20 @@ export function useGamepad() {
         });
       }
 
+      const pausePressed = !!gp.buttons[9]?.pressed;
+      if (pausePressed && !prevButtons.current.pause && !useGameStore.getState().paused) {
+        useGameStore.getState().setPaused(true);
+      }
+      prevButtons.current.pause = pausePressed;
+      if (useGameStore.getState().paused) {
+        drivingInput.steerAxis = drivingInput.throttleAxis = drivingInput.brakeAxis = 0;
+        drivingInput.controllerHandbrake = false;
+        prevButtons.current.reset = !!gp.buttons[8]?.pressed;
+        prevButtons.current.camera = !!gp.buttons[3]?.pressed;
+        animId = requestAnimationFrame(poll);
+        return;
+      }
+      const settings = useControllerSettings.getState();
       // --- 1. Steering: Left Stick X (axes[0]) + D-Pad fallback ---
       const rawStick = gp.axes[0] ?? 0;
       if (Math.abs(rawStick) > STICK_DEADZONE) {
@@ -240,10 +255,10 @@ export function useGamepad() {
           (Math.abs(rawStick) - STICK_DEADZONE) / (1 - STICK_DEADZONE);
         // Stick left (-1) -> steer +1 (left); stick right (+1) -> steer -1 (right)
         drivingInput.steerAxis = -Math.sign(rawStick) * Math.min(1, norm);
-      } else if (gp.buttons[14]?.pressed) {
+      } else if (settings.dpadSteering && gp.buttons[14]?.pressed) {
         // D-pad Left
         drivingInput.steerAxis = 1;
-      } else if (gp.buttons[15]?.pressed) {
+      } else if (settings.dpadSteering && gp.buttons[15]?.pressed) {
         // D-pad Right
         drivingInput.steerAxis = -1;
       } else {
@@ -302,12 +317,6 @@ export function useGamepad() {
       drivingInput.controllerHandbrake = handbrakePressed;
 
       // --- 5. Buttons: Start (Pause), Back/Select (Reset), Y (Camera) ---
-      const pausePressed = !!gp.buttons[9]?.pressed;
-      if (pausePressed && !prevButtons.current.pause) {
-        useGameStore.getState().setPaused(!useGameStore.getState().paused);
-      }
-      prevButtons.current.pause = pausePressed;
-
       const resetPressed = !!gp.buttons[8]?.pressed;
       if (resetPressed && !prevButtons.current.reset) {
         useGameStore.getState().reset();
@@ -327,7 +336,8 @@ export function useGamepad() {
       ) {
         lastHapticTime.current = time;
         const telemetry = useGameStore.getState();
-        dispatchHaptics(gp, telemetry);
+        if (settings.vibration) dispatchHaptics(gp, telemetry);
+        else if (dualSenseDevice) void sendDualSenseReport(0, [], 0, []);
       }
 
       animId = requestAnimationFrame(poll);

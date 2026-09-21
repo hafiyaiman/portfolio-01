@@ -1,12 +1,12 @@
 # Genting Drift
 
-A playable core boilerplate for a fictional Genting/Karak-inspired closed mountain pass. Units are metres, kilograms, seconds and radians; car-local +Z is forward, +X is left from the chase camera, +Y is up. Positive yaw steers left; right input produces negative yaw.
+A driving game combining the original GPX mountain road and Malaysian-style kilometre posts with the user-supplied Maps3D scenery. Units are metres, kilograms, seconds and radians; car-local +Z is forward, +X is left from the chase camera, +Y is up. Positive yaw steers left; right input produces negative yaw.
 
 ## Mountain terrain
 
-The current map uses the complete 10.1 km closed circuit from the user-supplied `New file 1.gpx`, replacing the previous 21.8 km route. The importer detects nearby endpoints, resamples the closing segment and wraps elevation smoothing across the seam. There is no finish barrier on the loop. Road, shoulder and terrain share a smoothed elevation field so repeated GPX traversals do not create vertically stacked pavement. A short grass verge joins each shoulder to a mountain shelf; there are no continuous bridge foundations. Terrain resolution increases to four metres beside the route, with shared triangle edges between detail levels. Vegetation samples those same rendered triangles. The slopes and vegetation are scenic approximations, not surveyed Genting terrain.
+The default `HybridMountain.tsx` environment combines `MountainRoad.tsx` pavement, shoulders, lane markings, barriers and Malaysian-style kilometre posts with imported terrain, buildings and trees. `track.ts` retains the original 10.1 km GPX road, spawn and recovery positions with +X east and +Z north. The imported scenery is converted into those coordinates offline. Terrain blends to the old road shelf within 65 m, with full adjustment within 16 m; buildings move vertically as rigid objects and trees follow their ground anchors. Original Maps3D pavement is hidden to avoid overlapping roads. This is a playable hybrid rather than unmodified surveyed scenery.
 
-`node components/game/environment/check-terrain.mjs` checks clearance and shoulder support along the whole route, plus the actual pavement triangle centres. `node --experimental-strip-types components/game/environment/preview-terrain.mjs` renders terrain-only previews into `tmp/` for inspecting the road-to-mountain connection without WebGL. These previews do not replace driving checks in the browser. Scene edits force a Fast Refresh remount to rebuild cached GPU geometry.
+`node --experimental-strip-types --test components/game/physics/roadPhysics.test.mjs components/game/physics/hybridRoad.test.mjs` checks road suspension contacts, imported scenery clearance across the loop and tree placement. `/game/route-preview` inspects the unmodified import, not the blended driving environment. See `scripts/GENTING-ALIGNMENT.md` for asset regeneration and limitations.
 
 ## Structure
 
@@ -47,7 +47,8 @@ components/game/
   stores/
     useGameStore.ts               Telemetry, score, pause and reset
   ui/
-    GameHUD.tsx                  Swiss/neobrutalist HUD, GSAP, touch controls
+    SimpleGameHUD.tsx            Minimal racing HUD, live GPX minimap, pause settings
+    GameHUD.tsx                  Retained legacy HUD and controller diagnostics
 ```
 
 ## Vehicle model
@@ -98,6 +99,8 @@ Chassis slip is signed yaw relative to momentum: `beta = atan2(dot(v,right), dot
 
 Physics calls `useGameStore.setState` directly. The HUD uses an imperative subscription to update text, while React subscribes only to pause/reset. This avoids rerendering the scene or HUD on every physics tick. Score is session-only.
 
+The active HUD follows the supplied racing-game reference: compact route information at top-left, an orange drift score at top-center, a transparent north-up GPX minimap at bottom-left and a white RPM dial with cyan gear indicator and km/h speed at bottom-right. Physics publishes car position and heading for the map. Garage, handling, audio, camera and controller tools are in the native pause dialog. Touch driving buttons appear only for coarse-pointer devices; the centre of the screen stays clear on desktop.
+
 ## Visuals and controls
 
 Exponential distance fog approximates altitude mist; Drei spotlight cones add visible light shafts. This is not a physically volumetric scattering renderer. Damp asphalt uses a low-roughness clearcoat material and local lights. No remote models or textures are required. Pixel ratio is capped at 1.5, with six non-shadowed streetlights. Large production maps should instance vegetation/barriers and add light-distance culling.
@@ -117,7 +120,7 @@ Run with `npm run dev`, then visit `/game`. Use pnpm 10 for dependency installs 
 
 The engine now uses a tuned SR20DET-inspired torque/boost calibration: 1.0 bar target, progressive spool above 2,100 RPM, approximately 370 Nm at full boost near 4,500 RPM, and a 7,500 RPM torque cut. These are game tuning values, not stock specifications or a measured dyno map. Boost increases rear-wheel drive torque and drops on lift/shift; airborne unloading reduces the boost target. `Telemetry.boost` is gauge pressure in bar. The turbo whistle follows this pressure, and boosted throttle lifts/forward gear changes trigger descending, slowing "stu-tu-tu" filtered-noise pulses. This is synthesized flutter, not a recording of an actual SR20DET or a recommendation for real turbo hardware.
 
-Press a driving key, touch the game, or click Start sound to unlock Web Audio. Sound on/off and the volume slider remain available in the HUD. Preferences are session-only. No microphone, downloads, or audio dependencies are needed.
+Press a driving key, touch the game, or click Enable sound to unlock Web Audio. Sound on/off and the volume slider are available in the pause menu. Preferences are session-only. No microphone, downloads, or audio dependencies are needed.
 
 `VehicleSound` synthesizes a turbo inline-four with a custom combustion waveform at `RPM / 30` firing frequency, a crank-frequency bass layer, mechanical harmonics, filtered intake noise, a resonant exhaust path, subtle detuning and a short reflected exhaust sound. Load opens the exhaust filter and adds intake/turbo sound. Gear changes briefly cut exhaust volume and trigger a shift transient; high-RPM throttle release triggers blow-off hiss and exhaust crackles. Grounded tire-contact slip controls filtered tire scrub and squeal. Road/wind noise follows speed. The HUD displays the same RPM and gear that drive the audio.
 

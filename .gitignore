@@ -43,3 +43,6 @@ next-env.d.ts
 # local pnpm and temp directories
 .pnpm-store/
 /tmp/
+
+# large raw assets (>100MB)
+public/maps/genting/scenery.glb

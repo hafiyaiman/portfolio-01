@@ -60,6 +60,10 @@ export function useDrivingInput() {
       )
         return;
       const down = event.type === "keydown";
+      if (useGameStore.getState().paused) {
+        clear();
+        return;
+      }
       if (bindings[event.code]) {
         if (event.target instanceof HTMLButtonElement && event.code === "Space")
           return;

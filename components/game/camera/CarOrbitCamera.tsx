@@ -27,6 +27,7 @@ export function CarOrbitCamera({ car }: { car: RefObject<Group | null> }) {
       reset.current = true;
     };
     const key = (event: KeyboardEvent) => {
+      if (useGameStore.getState().paused) return;
       if (
         event.target instanceof HTMLElement &&
         /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)

@@ -8,7 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { GameHUD } from "./ui/GameHUD";
+import { SimpleGameHUD } from "./ui/SimpleGameHUD";
 import { clearDrivingInput, useDrivingInput } from "./physics/useDrivingInput";
 import { useGamepad } from "./physics/useGamepad";
 import { initialTelemetry, useGameStore } from "./stores/useGameStore";
@@ -104,8 +104,8 @@ export function GentingDriftGame() {
           <DrivingControls />
           <GameCanvas />
           <GameAudio />
-          <GameHUD />
-          <button onClick={openGarage} className="absolute left-1/2 top-24 z-30 -translate-x-1/2 border border-lime-300/60 bg-zinc-950/90 px-5 py-3 text-xs font-bold uppercase tracking-[0.2em] text-lime-300 hover:bg-lime-300 hover:text-black focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-300">Garage / customize</button>
+          <SimpleGameHUD onGarage={openGarage} />
+          <div className="absolute bottom-1 left-2 z-30 text-[8px] text-white/80">Maps3D / <a href="https://satlas.allen.ai/" className="underline">Satlas, Allen Institute for AI</a> / <a href="https://www.openstreetmap.org/copyright" className="underline">OpenStreetMap contributors</a></div>
         </>}
       </GameBoundary>
     </main>
