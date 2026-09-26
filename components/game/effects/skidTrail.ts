@@ -11,7 +11,8 @@ export class SkidTrail {
   readonly colors: Float32Array;
   private head = 0;
   private count = 0;
-  private dirty = false;
+  private dirtyStart = 0;
+  private dirtyCount = 0;
   private capacity: number;
   private tracks = Array.from({ length: 4 }, () => ({
     active: false, point: new Vector3(), left: new Vector3(), right: new Vector3(), normal: new Vector3(), alpha: 0,
@@ -52,9 +53,10 @@ export class SkidTrail {
         points[v].toArray(this.positions, this.head * 12 + v * 3);
         this.colors.set([0.018, 0.02, 0.023, v < 2 ? track.alpha : alpha], this.head * 16 + v * 4);
       }
+      if (this.dirtyCount === 0) this.dirtyStart = this.head;
+      this.dirtyCount = Math.min(this.capacity, this.dirtyCount + 1);
       this.head = (this.head + 1) % this.capacity;
       this.count = Math.min(this.capacity, this.count + 1);
-      this.dirty = true;
     }
     track.active = true;
     track.point.copy(contact.point);
@@ -65,10 +67,17 @@ export class SkidTrail {
   }
 
   commit() {
-    if (!this.dirty) return;
-    this.geometry.attributes.position.needsUpdate = true;
-    this.geometry.attributes.color.needsUpdate = true;
+    if (!this.dirtyCount) return;
+    const tail = Math.min(this.dirtyCount, this.capacity - this.dirtyStart);
+    const wrapped = this.dirtyCount - tail;
+    for (const [name, stride] of [["position", 12], ["color", 16]] as const) {
+      const attribute = this.geometry.getAttribute(name) as BufferAttribute;
+      // Keep ranges from earlier physics steps until Three consumes them this frame.
+      attribute.addUpdateRange(this.dirtyStart * stride, tail * stride);
+      if (wrapped) attribute.addUpdateRange(0, wrapped * stride);
+      attribute.needsUpdate = true;
+    }
     this.geometry.setDrawRange(0, this.count * 6);
-    this.dirty = false;
+    this.dirtyCount = 0;
   }
 }

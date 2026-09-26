@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Grid, Html, OrbitControls } from "@react-three/drei";
 import { Group } from "three";
 import { SilviaModel } from "../models/SilviaModel";
@@ -11,6 +11,8 @@ import { useGarageStore } from "./useGarageStore";
 
 function Preview({ build }: { build: Build }) {
   const wheels = useRef<(Group | null)[]>([]);
+  const invalidate = useThree(state => state.invalidate);
+  useEffect(() => { invalidate(); }, [build, invalidate]);
   return <group position={[0, S15.cgHeight, 0]}><SilviaModel wheels={wheels} build={build} /></group>;
 }
 const button = "border border-white/25 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors hover:border-lime-300 hover:text-lime-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-300";
@@ -30,7 +32,7 @@ export default function Garage({ onClose }: { onClose: () => void }) {
         <p className="text-xs tracking-[0.2em] text-zinc-400">NISSAN</p><h2 className="text-2xl font-black uppercase italic">Silvia S15</h2>
         <p className="mt-1 font-mono text-[10px] text-zinc-400">SR20DET / REAR-WHEEL DRIVE</p>
       </div>
-      <Canvas dpr={[1, 1.5]} camera={{ position: [5, 2.6, 5], fov: 42 }} gl={{ antialias: true }}>
+      <Canvas dpr={1} frameloop="demand" camera={{ position: [5, 2.6, 5], fov: 42 }} gl={{ antialias: true }}>
         <ambientLight intensity={0.8} />
         <directionalLight position={[3, 6, 4]} intensity={3} color="#e9faff" />
         <directionalLight position={[-4, 3, -3]} intensity={2} color="#c9d63a" />

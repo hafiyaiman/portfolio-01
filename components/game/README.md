@@ -2,7 +2,17 @@
 
 A driving game combining the original GPX mountain road and Malaysian-style kilometre posts with the user-supplied Maps3D scenery. Units are metres, kilograms, seconds and radians; car-local +Z is forward, +X is left from the chase camera, +Y is up. Positive yaw steers left; right input produces negative yaw.
 
-## Mountain terrain
+## Laptop rendering
+
+The active game uses `BlenderMountain.tsx`. `course-laptop.glb` is a losslessly compressed copy of the 43.31 MiB course (20.84 MiB); driving and collision geometry is preserved. The original exports remain available for editing and geometry tests.
+
+The forest uses 192 m cells, detailed trees within 280 m of each cell centre, simplified trees out to 800 m, and fog concealing the cutoff. Tree positions and variants are retained. Textures are capped at 512 px nearby and 256 px at distance; distant leaf cards are thinned and enlarged to retain crown coverage. The canvas uses DPR 1 and two vehicle lighting beams, and stops continuous rendering when paused or hidden. Garage rendering is on demand. Physics timestep and handling are unchanged.
+
+Regenerate after a Blender export with `node scripts/optimize-game-assets.mjs` (uses the installed `meshoptimizer` and `sharp` packages). Run `node --test scripts/game-assets.test.mjs` to check lossless compression, asset budgets, and Three.js scene loading. Browser FPS and visual transitions still need validation on the target laptop; smaller downloads do not imply proportionally lower decoded geometry memory.
+
+The frame order is physics/interpolation at priority -3, follow camera at -2, then OrbitControls at -1. This keeps the camera attached to the current rendered car position at high speed. HUD writes are coalesced to one browser frame, and skid buffers upload only modified segments (including wrapped ranges), rather than the full trail on every change.
+
+## Earlier hybrid terrain
 
 The default `HybridMountain.tsx` environment combines `MountainRoad.tsx` pavement, shoulders, lane markings, barriers and Malaysian-style kilometre posts with imported terrain, buildings and trees. `track.ts` retains the original 10.1 km GPX road, spawn and recovery positions with +X east and +Z north. The imported scenery is converted into those coordinates offline. Terrain blends to the old road shelf within 65 m, with full adjustment within 16 m; buildings move vertically as rigid objects and trees follow their ground anchors. Original Maps3D pavement is hidden to avoid overlapping roads. This is a playable hybrid rather than unmodified surveyed scenery.
 

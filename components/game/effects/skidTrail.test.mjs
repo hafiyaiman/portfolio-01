@@ -4,6 +4,38 @@ import { Vector3 } from 'three';
 import { SkidTrail } from './skidTrail.ts';
 
 const contact = z => ({ point: new Vector3(0, 2, z), normal: new Vector3(0, 1, 0), right: new Vector3(1, 0, 0) });
+test('a new skid segment uploads only its changed vertices, including ring wrap', () => {
+  const trail = new SkidTrail(4);
+  const position = trail.geometry.attributes.position;
+  const color = trail.geometry.attributes.color;
+  trail.sample(0, contact(0), 1);
+  trail.sample(0, contact(0.2), 1);
+  trail.commit();
+  assert.deepEqual(position.updateRanges, [{ start: 0, count: 12 }]);
+  assert.deepEqual(color.updateRanges, [{ start: 0, count: 16 }]);
+  position.clearUpdateRanges(); color.clearUpdateRanges();
+  for (const z of [0.4, 0.6]) trail.sample(0, contact(z), 1);
+  trail.commit();
+  position.clearUpdateRanges(); color.clearUpdateRanges();
+  for (const z of [0.8, 1]) trail.sample(0, contact(z), 1);
+  trail.commit();
+  assert.deepEqual(position.updateRanges, [{ start: 36, count: 12 }, { start: 0, count: 12 }]);
+  assert.deepEqual(color.updateRanges, [{ start: 48, count: 16 }, { start: 0, count: 16 }]);
+  const version = position.version;
+  trail.commit();
+  assert.equal(position.version, version, 'Idle frames must not trigger another upload');
+  trail.geometry.dispose();
+});
+
+test('multiple physics commits preserve pending uploads until the renderer consumes them', () => {
+  const trail = new SkidTrail(4);
+  trail.sample(0, contact(0), 1);
+  trail.sample(0, contact(0.2), 1); trail.commit();
+  trail.sample(0, contact(0.4), 1); trail.commit();
+  assert.deepEqual(trail.geometry.attributes.position.updateRanges,
+    [{ start: 0, count: 12 }, { start: 12, count: 12 }]);
+  trail.geometry.dispose();
+});
 test('marks stay at deposited road positions and do not bridge separate skids', () => {
   const trail = new SkidTrail(8);
   trail.sample(0, contact(0), 1);
