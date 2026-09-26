@@ -77,7 +77,21 @@ function RacingTelemetry() {
         describedAt = performance.now();
       }
     };
-    update(); return useGameStore.subscribe(update);
+    // Physics can publish several times before a single browser paint.
+    // Read the latest telemetry once, rather than rewriting SVG on every substep.
+    let frame: number | null = null;
+    const unsubscribe = useGameStore.subscribe(() => {
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => {
+        frame = null;
+        update();
+      });
+    });
+    update();
+    return () => {
+      unsubscribe();
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, []);
   return <>
     <div className={styles.score} aria-label="Drift score">

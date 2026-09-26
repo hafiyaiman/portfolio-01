@@ -1,7 +1,7 @@
 "use client";
 // @refresh reset
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { BlenderMountain } from "./environment/BlenderMountain";
@@ -22,9 +22,17 @@ function LoadingCar() {
 export default function GameCanvas() {
   const paused = useGameStore((state) => state.paused);
   const resetId = useGameStore((state) => state.resetId);
-  return <Canvas dpr={[1, 1.5]} camera={{ fov: 58, near: 0.1, far: 700 }} gl={{ antialias: true, powerPreference: "high-performance" }} fallback={<div className="p-12 text-white">WebGL is unavailable. Enable hardware acceleration and reload.</div>}>
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    const update = () => setHidden(document.hidden);
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
+  return <Canvas dpr={1} frameloop={hidden ? "never" : paused ? "demand" : "always"} camera={{ fov: 58, near: 0.1, far: 750 }} gl={{ antialias: false, powerPreference: "high-performance" }} fallback={<div className="p-12 text-white">WebGL is unavailable. Enable hardware acceleration and reload.</div>}>
     <Suspense fallback={<LoadingCar />}>
-      <Physics timeStep={PHYSICS_DT} paused={paused} gravity={[0, -9.81, 0]}>
+      {/* Physics/interpolation must finish before the follow camera (-2) and controls (-1). */}
+      <Physics updatePriority={-3} timeStep={PHYSICS_DT} paused={paused || hidden} gravity={[0, -9.81, 0]}>
         <BlenderMountain />
         <CarController key={resetId} route={route} />
       </Physics>
